@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="top-row">
+    <h2>Overview</h2>
+    <div class="center">
+      <input class="input" placeholder="Search dashboard..." />
+      <button class="btn"><i class="ph ph-plus"></i> New View</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Metric Card 1 -->
+    <div class="card">
+      <h3>Events per Minute</h3>
+      <div class="metric">{{ metrics.events_per_minute }}</div>
+      <div class="center" style="margin-top: 8px; color: var(--status-success); font-size: 13px;">
+        <i class="ph-bold ph-trend-up"></i>
+        <span>+12% vs last hour</span>
+      </div>
+    </div>
+
+    <!-- Metric Card 2 -->
+    <div class="card">
+      <h3>Active Alerts</h3>
+      <div class="metric">{{ metrics.active_alerts }}</div>
+      <div class="center" style="margin-top: 8px; color: var(--status-warning); font-size: 13px;">
+        <i class="ph-bold ph-warning"></i>
+        <span>Requires attention</span>
+      </div>
+    </div>
+
+    <!-- Metric Card 3 -->
+    <div class="card">
+      <h3>Top Sources</h3>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+        {% for s in metrics.top_sources %}
+        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+          <span class="muted">{{ s.ip }}</span>
+          <span style="font-weight: 600;">{{ s.events }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Full Width Table -->
+    <div class="card full-width">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3>Recent Events</h3>
+        <a href="{% url 'events' %}" class="btn ghost small">View All</a>
+      </div>
+
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Source</th>
+              <th>Message</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in metrics.recent_events %}
+            <tr>
+              <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ e.time }}</td>
+              <td>{{ e.source }}</td>
+              <td>{{ e.message }}</td>
+              <td>
+                <span class="severity sev-low">Log</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="card" style="grid-column: span 2;">
+      <h3>Events Volume</h3>
+      <div style="height: 250px;">
+        <canvas id="eventsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Alert Severity</h3>
+      <div style="height: 250px; display: flex; justify-content: center;">
+        <canvas id="severityChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Chart Configuration
+  Chart.defaults.color = '#a1a1aa';
+  Chart.defaults.borderColor = '#27272a';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+
+  // Events Chart
+  const ctxEvents = document.getElementById('eventsChart').getContext('2d');
+  new Chart(ctxEvents, {
+    type: 'line',
+    data: {
+      labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25', '10:30'],
+      datasets: [{
+        label: 'Events',
+        data: [65, 59, 80, 81, 56, 120, 100],
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Severity Chart
+  const ctxSeverity = document.getElementById('severityChart').getContext('2d');
+  new Chart(ctxSeverity, {
+    type: 'doughnut',
+    data: {
+      labels: ['Low', 'Medium', 'High'],
+      datasets: [{
+        data: [12, 5, 2],
+        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' }
+      },
+      cutout: '70%'
+    }
+  });
+</script>
+{% endblock %}

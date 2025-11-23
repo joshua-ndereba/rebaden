@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Events{% endblock %}
+{% block page_title %}Events{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="top-row">
+    <h2>Events Log</h2>
+    <form method="get" class="center" style="flex-wrap: wrap; justify-content: flex-end;">
+      <div style="position: relative;">
+        <i class="ph ph-magnifying-glass"
+          style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+        <input class="input" type="text" name="q" placeholder="Search message or source..." value="{{ q|default:'' }}"
+          style="padding-left: 36px;">
+      </div>
+
+      <select class="input" name="severity">
+        <option value="">All Severities</option>
+        <option value="low" {% if severity == 'low' %}selected{% endif %}>Low</option>
+        <option value="medium" {% if severity == 'medium' %}selected{% endif %}>Medium</option>
+        <option value="high" {% if severity == 'high' %}selected{% endif %}>High</option>
+      </select>
+
+      <button class="btn" type="submit">
+        <i class="ph ph-funnel"></i> Filter
+      </button>
+    </form>
+  </div>
+
+  <div class="card full-width" style="padding: 0; overflow: hidden;">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Source</th>
+            <th>Event Message</th>
+            <th>Severity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in page_obj.object_list %}
+          <tr>
+            <td style="font-family: 'JetBrains Mono'; font-size: 13px; white-space: nowrap;">{{ e.time }}</td>
+            <td>{{ e.source }}</td>
+            <td>{{ e.message }}</td>
+            <td>
+              <span
+                class="severity {% if e.severity == 'low' %}sev-low{% elif e.severity == 'high' %}sev-high{% else %}sev-medium{% endif %}">
+                {{ e.severity }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="center" style="padding: 32px; color: var(--text-muted);">No events found matching
+              your criteria.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="center" style="margin-top: 24px; justify-content: center;">
+    {% if page_obj.has_previous %}
+    <a class="btn ghost small"
+      href="?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&severity={{ severity }}">
+      <i class="ph ph-caret-left"></i> Previous
+    </a>
+    {% endif %}
+
+    <span class="muted small" style="margin: 0 12px;">
+      Page <strong style="color: var(--text-main);">{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+    <a class="btn ghost small" href="?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&severity={{ severity }}">
+      Next <i class="ph ph-caret-right"></i>
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

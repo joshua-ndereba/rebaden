@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Logs{% endblock %}
+{% block page_title %}Log Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>Log Ingestion</h2>
+        <div class="center">
+            <button class="btn" onclick="simulateLoad()"><i class="ph ph-arrows-clockwise"></i> Load from
+                Devices</button>
+        </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 2fr;">
+        <!-- Upload Section -->
+        <div class="card">
+            <h3>Upload Log File</h3>
+            <p class="muted small" style="margin-bottom: 16px;">Drag and drop malicious log files here for analysis.</p>
+
+            <div id="drop-zone"
+                style="border: 2px dashed var(--border-subtle); border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                <i class="ph ph-upload-simple"
+                    style="font-size: 32px; color: var(--text-muted); margin-bottom: 8px;"></i>
+                <div style="font-weight: 500;">Drop files here</div>
+                <div class="small muted">or click to browse</div>
+                <input type="file" id="file-input" style="display: none;">
+            </div>
+
+            <div id="upload-status" style="margin-top: 16px; display: none;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="ph ph-check-circle" style="color: var(--status-success);"></i>
+                    <span class="small">File uploaded successfully</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Logs -->
+        <div class="card">
+            <h3>Live Log Stream</h3>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source</th>
+                            <th>Type</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-table-body">
+                        {% for log in logs %}
+                        <tr>
+                            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ log.time }}</td>
+                            <td>{{ log.source }}</td>
+                            <td><span class="severity sev-low">{{ log.type }}</span></td>
+                            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ log.message }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Drag and Drop Logic
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const uploadStatus = document.getElementById('upload-status');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--accent-primary)';
+        dropZone.style.background = 'var(--bg-hover)';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = 'var(--border-subtle)';
+        dropZone.style.background = 'transparent';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--border-subtle)';
+        dropZone.style.background = 'transparent';
+
+        if (e.dataTransfer.files.length > 0) {
+            handleFiles(e.dataTransfer.files);
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            handleFiles(fileInput.files);
+        }
+    });
+
+    function handleFiles(files) {
+        // Mock upload process
+        uploadStatus.style.display = 'block';
+        setTimeout(() => {
+            uploadStatus.style.display = 'none';
+            // Add a mock log entry from the file
+            addLogEntry('Now', 'Upload', 'file', `Analyzed ${files[0].name}: No threats found.`);
+        }, 2000);
+    }
+
+    function simulateLoad() {
+        const btn = document.querySelector('button[onclick="simulateLoad()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Loading...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            addLogEntry('Now', 'Device-01', 'syslog', 'Sync completed successfully.');
+            addLogEntry('Now', 'Device-02', 'auth', 'User session refreshed.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }, 1500);
+    }
+
+    function addLogEntry(time, source, type, message) {
+        const tbody = document.getElementById('log-table-body');
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">${time}</td>
+            <td>${source}</td>
+            <td><span class="severity sev-low">${type}</span></td>
+            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">${message}</td>
+        `;
+        tbody.insertBefore(row, tbody.firstChild);
+    }
+</script>
+{% endblock %}

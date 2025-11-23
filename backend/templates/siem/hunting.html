@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Hunting{% endblock %}
+{% block page_title %}Hunting{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="top-row">
+    <h2>Threat Hunting</h2>
+    <div class="center">
+      <button class="btn"><i class="ph ph-plus"></i> New Query</button>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns: 1fr;">
+    <div class="card full-width">
+      <h3>Threat Origin Map</h3>
+      <div id="map" style="height: 400px; width: 100%; border-radius: 8px; z-index: 0;"></div>
+    </div>
+
+    <div class="card full-width">
+      <h3>Saved Queries</h3>
+      <div style="display: flex; flex-direction: column; gap: 0;">
+        {% for q in saved_queries %}
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-subtle);">
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">{{ q.name }}</div>
+            <code
+              style="background: var(--bg-app); padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono'; font-size: 12px; color: var(--accent-info);">{{ q.query }}</code>
+          </div>
+          <div class="center">
+            <button class="btn ghost small"><i class="ph ph-play"></i> Run</button>
+            <button class="icon-btn"><i class="ph ph-pencil-simple"></i></button>
+          </div>
+        </div>
+        {% empty %}
+        <div class="center muted" style="padding: 24px;">No saved queries found.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Initialize Leaflet Map
+  const map = L.map('map').setView([20, 0], 2);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Mock Threat Locations
+  const threats = [
+    { lat: 37.7749, lng: -122.4194, ip: '192.168.1.100', type: 'Brute Force' },
+    { lat: 51.5074, lng: -0.1278, ip: '10.0.0.5', type: 'Malware C2' },
+    { lat: 35.6762, lng: 139.6503, ip: '172.16.0.20', type: 'Data Exfil' },
+  ];
+
+  threats.forEach(t => {
+    L.circleMarker([t.lat, t.lng], {
+      radius: 8,
+      fillColor: '#ef4444',
+      color: '#ef4444',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.6
+    }).addTo(map)
+      .bindPopup(`<b>${t.ip}</b><br>${t.type}`);
+  });
+
+  // Button Interactions
+  const runBtns = document.querySelectorAll('.btn.ghost.small');
+  runBtns.forEach(btn => {
+    if (btn.innerText.includes('Run')) {
+      btn.addEventListener('click', () => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Running...';
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.innerHTML = '<i class="ph ph-check"></i> Done';
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            alert('Query executed successfully. 12 matches found.');
+          }, 1000);
+        }, 1500);
+      });
+    }
+  });
+
+  const newQueryBtn = document.querySelector('.top-row .btn');
+  newQueryBtn.addEventListener('click', () => {
+    const name = prompt('Enter query name:');
+    if (name) {
+      alert(`Query "${name}" saved!`);
+    }
+  });
+</script>
+{% endblock %}

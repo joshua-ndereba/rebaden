@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>Reports & Exports</h2>
+        <div class="center">
+            <button class="btn"><i class="ph ph-plus"></i> Generate New Report</button>
+        </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 2fr 1fr;">
+        <div class="card">
+            <h3>Available Reports</h3>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Report Name</th>
+                            <th>Generated Date</th>
+                            <th>Type</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reports %}
+                        <tr>
+                            <td style="font-weight: 500;">{{ r.name }}</td>
+                            <td class="muted small">{{ r.generated }}</td>
+                            <td><span class="severity sev-low">{{ r.type }}</span></td>
+                            <td>
+                                <button class="btn ghost small"><i class="ph ph-download-simple"></i> Download</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Scheduled Reports</h3>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="background: var(--bg-app); padding: 12px; border-radius: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 4px;">Daily Executive Brief</div>
+                    <div class="muted small">Recipients: execs@company.com</div>
+                    <div class="muted small">Schedule: Daily at 08:00 AM</div>
+                </div>
+                <div style="background: var(--bg-app); padding: 12px; border-radius: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 4px;">Monthly Compliance Audit</div>
+                    <div class="muted small">Recipients: compliance@company.com</div>
+                    <div class="muted small">Schedule: 1st of month</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const generateBtn = document.querySelector('.top-row .btn');
+    generateBtn.addEventListener('click', () => {
+        generateBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Generating...';
+        generateBtn.disabled = true;
+
+        setTimeout(() => {
+            generateBtn.innerHTML = '<i class="ph ph-plus"></i> Generate New Report';
+            generateBtn.disabled = false;
+
+            const tbody = document.querySelector('tbody');
+            const row = document.createElement('tr');
+            const date = new Date().toISOString().split('T')[0];
+            row.innerHTML = `
+                <td style="font-weight: 500;">Custom Security Report</td>
+                <td class="muted small">${date}</td>
+                <td><span class="severity sev-low">PDF</span></td>
+                <td>
+                    <button class="btn ghost small" onclick="downloadReport(this)"><i class="ph ph-download-simple"></i> Download</button>
+                </td>
+            `;
+            tbody.insertBefore(row, tbody.firstChild);
+        }, 2000);
+    });
+
+    const downloadBtns = document.querySelectorAll('.btn.ghost.small');
+    downloadBtns.forEach(btn => {
+        btn.setAttribute('onclick', 'downloadReport(this)');
+    });
+
+    function downloadReport(btn) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-check"></i> Saved';
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+        }, 2000);
+    }
+</script>
+{% endblock %}

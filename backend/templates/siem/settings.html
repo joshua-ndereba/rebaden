@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="top-row">
+    <h2>Settings</h2>
+    <div class="center">
+      <button class="btn"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns: 1fr 1fr;">
+    <div class="card">
+      <h3>Profile Settings</h3>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+          <div class="avatar" style="width: 64px; height: 64px; font-size: 24px;">A</div>
+          <div>
+            <button class="btn small ghost">Change Avatar</button>
+          </div>
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Display Name</label>
+          <input class="input" type="text" value="Analyst" style="width: 100%;">
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Email Address</label>
+          <input class="input" type="email" value="analyst@sentinel.local" style="width: 100%;">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Appearance</h3>
+      <div
+        style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+        <div>
+          <div style="font-weight: 600;">Dark Mode</div>
+          <div class="small muted">Toggle application theme</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" checked id="theme-toggle">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>General Configuration</h3>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">SIEM Instance
+            Name</label>
+          <input class="input" type="text" value="DERE Prime" style="width: 100%;">
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Timezone</label>
+          <select class="input" style="width: 100%;">
+            <option>UTC</option>
+            <option>America/New_York</option>
+            <option>Europe/London</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Data Ingestion</h3>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div
+          style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+          <div>
+            <div style="font-weight: 600;">Syslog Listener</div>
+            <div class="small muted">Port 514 (UDP)</div>
+          </div>
+          <div style="color: var(--status-success); font-weight: 600;">Active</div>
+        </div>
+        <div
+          style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+          <div>
+            <div style="font-weight: 600;">API Collector</div>
+            <div class="small muted">/api/v1/collector</div>
+          </div>
+          <div style="color: var(--status-success); font-weight: 600;">Active</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Toggle Switch Styles */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-hover);
+    transition: .4s;
+    border-radius: 24px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+
+  input:checked+.slider {
+    background-color: var(--accent-primary);
+  }
+
+  input:checked+.slider:before {
+    transform: translateX(24px);
+  }
+</style>
+
+<script>
+  const toggle = document.getElementById('theme-toggle');
+  toggle.addEventListener('change', (e) => {
+    if (e.target.checked) {
+      document.body.style.filter = 'none';
+    } else {
+      // Simple invert for "Light Mode" demo
+      document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+    }
+  });
+
+  const saveBtn = document.querySelector('.top-row .btn');
+  saveBtn.addEventListener('click', () => {
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Saving...';
+    saveBtn.disabled = true;
+
+    setTimeout(() => {
+      saveBtn.innerHTML = '<i class="ph ph-check"></i> Saved';
+      setTimeout(() => {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+      }, 2000);
+    }, 1000);
+  });
+</script>
+{% endblock %}

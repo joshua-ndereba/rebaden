@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Alerts{% endblock %}
+{% block page_title %}Alerts{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="top-row">
+    <h2>Active Alerts</h2>
+    <div class="center">
+      <button class="btn"><i class="ph ph-plus"></i> Create Alert</button>
+    </div>
+  </div>
+
+  <div class="alerts-list" style="display: flex; flex-direction: column; gap: 16px;">
+    {% for a in alerts %}
+    <div class="card"
+      style="flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 0;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div
+          style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--bg-hover); display: flex; align-items: center; justify-content: center;">
+          <i class="ph-fill ph-warning" style="color: var(--status-warning); font-size: 20px;"></i>
+        </div>
+        <div>
+          <div class="primary" style="font-weight:600; font-size: 16px; margin-bottom: 4px;">{{ a.name }}</div>
+          <div class="meta small muted" style="display: flex; align-items: center; gap: 8px;">
+            <span>{{ a.count }} occurrences</span>
+            <span>•</span>
+            <span style="text-transform: capitalize;">{{ a.status }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert-actions center">
+        {% if a.status != 'investigating' %}
+        <form method="post" style="display:inline">
+          {% csrf_token %}
+          <input type="hidden" name="alert_id" value="{{ a.id }}">
+          <input type="hidden" name="action" value="ack">
+          <button class="btn ghost small" type="submit">
+            <i class="ph ph-check"></i> Acknowledge
+          </button>
+        </form>
+        {% endif %}
+        {% if a.status != 'closed' %}
+        <form method="post" style="display:inline">
+          {% csrf_token %}
+          <input type="hidden" name="alert_id" value="{{ a.id }}">
+          <input type="hidden" name="action" value="close">
+          <button class="btn small" type="submit">
+            <i class="ph ph-x"></i> Close
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="card muted center" style="justify-content: center; padding: 48px;">
+      <i class="ph ph-check-circle" style="font-size: 32px; margin-bottom: 8px;"></i>
+      <span>No active alerts found. Good job!</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  const createAlertBtn = document.querySelector('.top-row .btn');
+  createAlertBtn.addEventListener('click', () => {
+    const name = prompt('Enter alert name:');
+    if (name) {
+      alert(`Alert rule "${name}" created successfully!`);
+    }
+  });
+</script>
+{% endblock %}

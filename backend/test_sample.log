@@ -1,0 +1,12 @@
+Nov 22 10:30:45 server sshd[1234]: Failed password for admin from 192.168.1.100 port 54321 ssh2
+Nov 22 10:30:47 server sshd[1235]: Failed password for admin from 192.168.1.100 port 54322 ssh2
+Nov 22 10:30:49 server sshd[1236]: Failed password for admin from 192.168.1.100 port 54323 ssh2
+Nov 22 10:30:51 server sshd[1237]: Failed password for admin from 192.168.1.100 port 54324 ssh2
+Nov 22 10:30:53 server sshd[1238]: Failed password for admin from 192.168.1.100 port 54325 ssh2
+Nov 22 10:30:55 server sshd[1239]: Failed password for admin from 192.168.1.100 port 54326 ssh2
+Nov 22 10:31:00 server sshd[1240]: Accepted password for admin from 192.168.1.100 port 54327 ssh2
+Nov 22 10:31:05 server httpd[5678]: 192.168.1.50 - - [22/Nov/2025:10:31:05] "GET /search?q=test' UNION SELECT * FROM users-- HTTP/1.1" 200 1234
+Nov 22 10:31:10 server httpd[5679]: 192.168.1.99 - - [22/Nov/2025:10:31:10] "GET /comment?text=<script>alert('XSS')</script> HTTP/1.1" 200 512
+Nov 22 10:31:15 server kernel: CRITICAL: System temperature exceeds threshold
+Nov 22 10:31:20 server app[9012]: WARNING: Disk space low on /var (85% used)
+Nov 22 10:31:25 server nginx[7890]: INFO: Request processed successfully

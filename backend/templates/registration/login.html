@@ -1,0 +1,47 @@
+{% extends 'registration/base_auth.html' %}
+
+{% block title %}Login{% endblock %}
+{% block page_title %}Login{% endblock %}
+
+{% block content %}
+<div class="container" style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+    <div class="card" style="width: 100%; max-width: 400px; padding: 32px;">
+        <div class="center" style="flex-direction: column; margin-bottom: 24px;">
+            <i class="ph-fill ph-shield-check" style="font-size: 48px; color: var(--accent-primary);"></i>
+            <h2 style="margin-top: 16px;">Welcome Back</h2>
+            <p class="muted small">Sign in to access the SIEM console</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div
+                style="background: rgba(239, 68, 68, 0.1); color: var(--status-danger); padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;">
+                Invalid username or password.
+            </div>
+            {% endif %}
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Username</label>
+                <input class="input" type="text" name="username" autofocus required style="width: 100%;">
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Password</label>
+                <input class="input" type="password" name="password" required style="width: 100%;">
+            </div>
+
+            <button class="btn" type="submit" style="width: 100%; justify-content: center;">
+                Sign In <i class="ph-bold ph-arrow-right"></i>
+            </button>
+        </form>
+
+        <div class="center" style="margin-top: 24px; font-size: 13px;">
+            <span class="muted">Don't have an account?</span>
+            <a href="{% url 'register' %}"
+                style="color: var(--accent-primary); font-weight: 500; margin-left: 6px;">Create Account</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

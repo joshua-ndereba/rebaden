@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Assets{% endblock %}
+{% block page_title %}Assets{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="top-row">
+    <h2>Managed Assets</h2>
+    <div class="center">
+      <button class="btn"><i class="ph ph-plus"></i> Add Asset</button>
+    </div>
+  </div>
+
+  <div class="card full-width" style="padding: 0; overflow: hidden;">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Hostname</th>
+            <th>IP Address</th>
+            <th>Operating System</th>
+            <th>Owner</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in assets %}
+          <tr>
+            <td style="font-weight: 600;">{{ a.hostname }}</td>
+            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ a.ip }}</td>
+            <td>
+              {% if 'Windows' in a.os %}
+              <i class="ph-fill ph-windows-logo" style="color: #00a4ef; margin-right: 6px; vertical-align: middle;"></i>
+              {% elif 'Linux' in a.os %}
+              <i class="ph-fill ph-linux-logo" style="color: #fcc624; margin-right: 6px; vertical-align: middle;"></i>
+              {% else %}
+              <i class="ph-fill ph-desktop"
+                style="color: var(--text-muted); margin-right: 6px; vertical-align: middle;"></i>
+              {% endif %}
+              {{ a.os }}
+            </td>
+            <td>
+              <div class="center" style="gap: 8px;">
+                <div class="avatar" style="width: 24px; height: 24px; font-size: 10px;">{{ a.owner|slice:":1"|upper }}
+                </div>
+                <span>{{ a.owner }}</span>
+              </div>
+            </td>
+            <td><span class="severity sev-low">Active</span></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="center" style="padding: 32px; color: var(--text-muted);">No assets found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const addAssetBtn = document.querySelector('.top-row .btn');
+  addAssetBtn.addEventListener('click', () => {
+    const hostname = prompt('Enter hostname:');
+    if (hostname) {
+      const ip = prompt('Enter IP address:');
+      if (ip) {
+        alert(`Asset ${hostname} (${ip}) added to inventory.`);
+        // In a real app, this would POST to the backend
+        location.reload();
+      }
+    }
+  });
+</script>
+{% endblock %}

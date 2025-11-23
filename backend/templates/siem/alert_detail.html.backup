@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %}Alert Detail{% endblock %}
+{% block page_title %}Alert Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <div>
+            <h2>{{ alert.name }}</h2>
+            <div class="center" style="gap: 8px; margin-top: 8px;">
+                <span
+                    class="severity {% if alert.severity == 'critical' %}sev-critical{% elif alert.severity == 'high' %}sev-high{% elif alert.severity == 'medium' %}sev-medium{% else %}sev-low{% endif %}">
+                    {{ alert.severity|upper }}
+                </span>
+                <span class="badge">{{ alert.status }}</span>
+                <span class="muted small">Alert #{{ alert.id }}</span>
+            </div>
+        </div>
+        <div class="center">
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="assign_to_me">
+                <button class="btn ghost" type="submit">
+                    <i class="ph ph-user"></i> Assign to Me
+                </button>
+            </form>
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_investigation">
+                <button class="btn" type="submit">
+                    <i class="ph ph-detective"></i> Create Investigation
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Alert Information -->
+        <div class="card full-width">
+            <h3>Alert Information</h3>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px;">
+                <div>
+                    <div class="muted small">First Seen</div>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ alert.first_seen }}</div>
+                </div>
+                <div>
+                    <div class="muted small">Last Seen</div>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ alert.last_seen }}</div>
+                </div>
+                <div>
+                    <div class="muted small">Event Count</div>
+                    <div style="font-weight: 600;">{{ alert.event_count }}</div>
+                </div>
+                <div>
+                    <div class="muted small">Assigned To</div>
+                    <div>{{ alert.assigned_to|default:"Unassigned" }}</div>
+                </div>
+            </div>
+            <div style="margin-top: 16px;">
+                <div class="muted small">Description</div>
+                <div style="margin-top: 8px;">{{ alert.description }}</div>
+            </div>
+        </div>
+
+        <!-- AI Analysis -->
+        {% if ai_analysis %}
+        <div class="card full-width">
+            <h3><i class="ph ph-brain"></i> AI-Powered Analysis</h3>
+
+            <!-- Severity Assessment -->
+            <div style="margin-top: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                <div style="font-weight: 600; margin-bottom: 8px;">Severity Assessment</div>
+                <div style="font-size: 14px; color: var(--status-warning);">{{
+                    ai_analysis.severity_assessment.assessment }}</div>
+                <div style="margin-top: 8px; font-size: 13px;">
+                    <div class="muted">Score: {{ ai_analysis.severity_assessment.score }}/20</div>
+                    <div style="margin-top: 4px;">
+                        {% for factor in ai_analysis.severity_assessment.factors %}
+                        <div class="muted small">• {{ factor }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investigation Priority -->
+            <div style="margin-top: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                <div style="font-weight: 600; margin-bottom: 8px;">Investigation Priority</div>
+                <div style="font-size: 14px;">{{ ai_analysis.investigation_priority.level }}</div>
+                <div class="muted small" style="margin-top: 4px;">SLA: {{ ai_analysis.investigation_priority.sla }}
+                </div>
+            </div>
+
+            <!-- Recommended Actions -->
+            {% if ai_analysis.recommended_actions %}
+            <div style="margin-top: 16px;">
+                <div style="font-weight: 600; margin-bottom: 8px;">Recommended Actions</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    {% for action in ai_analysis.recommended_actions|slice:":6" %}
+                    <div
+                        style="padding: 8px; background: var(--bg-secondary); border-radius: 6px; border-left: 3px solid var(--accent);">
+                        <div style="font-size: 13px; font-weight: 500;">{{ action.priority }}. {{ action.action }}</div>
+                        <div class="muted small" style="margin-top: 4px;">{{ action.description }}</div>
+                        <span class="badge small" style="margin-top: 4px;">{{ action.category }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- IOC Matches -->
+            {% if ai_analysis.ioc_matches %}
+            <div style="margin-top: 16px;">
+                <div style="font-weight: 600; margin-bottom: 8px; color: var(--status-error);">
+                    <i class="ph ph-warning"></i> IOC Matches Found ({{ ai_analysis.ioc_matches|length }})
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    {% for match in ai_analysis.ioc_matches|slice:":5" %}
+                    <div
+                        style="padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; border-left: 3px solid var(--status-error);">
+                        <div style="font-family: 'JetBrains Mono'; font-size: 12px;">{{ match.value }}</div>
+                        <div class="muted small">{{ match.type }} - {{ match.description }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- MITRE ATT&CK Mapping -->
+            {% if ai_analysis.mitre_mapping %}
+            <div style="margin-top: 16px;">
+                <div style="font-weight: 600; margin-bottom: 8px;">MITRE ATT&CK Techniques</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    {% for mapping in ai_analysis.mitre_mapping %}
+                    <a href="{% url 'mitre_technique_detail' mapping.technique_id %}" class="badge"
+                        style="padding: 6px 12px; background: var(--bg-secondary);">
+                        {{ mapping.technique_id }}: {{ mapping.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <!-- Timeline Analysis -->
+        {% if ai_analysis.timeline_analysis.events %}
+        <div class="card full-width">
+            <h3>Timeline Analysis</h3>
+            <div class="muted small" style="margin-top: 8px;">{{ ai_analysis.timeline_analysis.summary }}</div>
+
+            <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px;">
+                {% for event in ai_analysis.timeline_analysis.events|slice:":10" %}
+                <div
+                    style="display: flex; gap: 16px; padding: 8px; background: var(--bg-secondary); border-radius: 6px;">
+                    <div
+                        style="font-family: 'JetBrains Mono'; font-size: 12px; white-space: nowrap; color: var(--text-muted);">
+                        {{ event.time|date:"H:i:s" }}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 13px;">{{ event.message }}</div>
+                        <div class="muted small">{{ event.source }} {% if event.source_ip %}({{ event.source_ip }}){%
+                            endif %}</div>
+                    </div>
+                    <span class="severity sev-{{ event.severity }}">{{ event.severity }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <!-- Related Events -->
+        <div class="card full-width">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3>Related Events ({{ related_events|length }})</h3>
+                <a href="{% url 'events' %}?alert={{ alert.id }}" class="btn ghost small">View All</a>
+            </div>
+
+            {% if related_events %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source</th>
+                            <th>Message</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in related_events %}
+                        <tr>
+                            <td style="font-family: 'JetBrains Mono'; font-size: 13px; white-space: nowrap;">{{
+                                event.time|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ event.source }}</td>
+                            <td>{{ event.message|truncatewords:15 }}</td>
+                            <td>
+                                <span
+                                    class="severity {% if event.severity == 'critical' %}sev-critical{% elif event.severity == 'high' %}sev-high{% elif event.severity == 'medium' %}sev-medium{% else %}sev-low{% endif %}">
+                                    {{ event.severity }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="muted center" style="padding: 32px;">No related events found</div>
+            {% endif %}
+        </div>
+
+
+        <!-- Affected Assets -->
+        {% if affected_assets %}
+        <div class="card">
+            <h3>Affected Assets ({{ affected_assets|length }})</h3>
+            <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+                {% for asset in affected_assets %}
+                <div style="padding: 8px; background: var(--bg-secondary); border-radius: 6px;">
+                    <div style="font-weight: 500;">{{ asset.hostname }}</div>
+                    <div class="muted small">{{ asset.ip }} - {{ asset.asset_type }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- MITRE Techniques -->
+        {% if mitre_techniques %}
+        <div class="card">
+            <h3>MITRE ATT&CK Techniques</h3>
+            <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+                {% for technique in mitre_techniques %}
+                <a href="{% url 'mitre_technique_detail' technique.technique_id %}"
+                    style="padding: 8px; background: var(--bg-secondary); border-radius: 6px; text-decoration: none; color: inherit;">
+                    <div style="font-weight: 500;">{{ technique.technique_id }}</div>
+                    <div class="muted small">{{ technique.name }}</div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .sev-critical {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .sev-high {
+        background: rgba(249, 115, 22, 0.2);
+        color: #f97316;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .sev-medium {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .sev-low {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
