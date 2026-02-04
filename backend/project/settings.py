@@ -1,4 +1,8 @@
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Define project base directory so DATABASES and other paths work
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,7 +13,8 @@ ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
  
 # SECURITY WARNING: keep the secret key used in production secret!
 # For local development we set a static key; replace with an env var for production.
-SECRET_KEY = 'dev-secret-key-404finders-please-change'
+SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-404finders-please-change')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 DATABASES = {
     'default': {
@@ -25,6 +30,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',
+    'threats',
     'apps.core',  # Add your core app here
 ]
 
@@ -103,3 +111,13 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
