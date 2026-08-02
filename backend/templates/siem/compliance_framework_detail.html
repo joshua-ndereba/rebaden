@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ framework.name }}{% endblock %}
+{% block page_title %}Compliance Framework Detail{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <div>
+            <h2>{{ framework.name }}</h2>
+            <span class="muted small">{{ framework.version|default:"" }}</span>
+        </div>
+        <a href="{% url 'compliance' %}" class="btn ghost"><i class="ph ph-arrow-left"></i> Back</a>
+    </div>
+
+    {% if framework.description %}
+    <div class="card full-width" style="margin-bottom: 16px;">
+        <p>{{ framework.description }}</p>
+    </div>
+    {% endif %}
+
+    <div class="card full-width">
+        <h3>Compliance Checks</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Check</th>
+                        <th>Category</th>
+                        <th>Result</th>
+                        <th>Last Run</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for check in checks %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ check.name }}</td>
+                        <td><span class="badge">{{ check.category|default:"General" }}</span></td>
+                        <td>
+                            {% if check.last_result == 'pass' %}
+                            <span style="color: var(--status-success);">✓ Pass</span>
+                            {% elif check.last_result == 'fail' %}
+                            <span style="color: var(--status-error);">✗ Fail</span>
+                            {% else %}
+                            <span class="muted">— Not run</span>
+                            {% endif %}
+                        </td>
+                        <td class="muted small">{{ check.last_run|date:"Y-m-d H:i"|default:"Never" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="center muted" style="padding: 32px;">No checks configured for this
+                            framework</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

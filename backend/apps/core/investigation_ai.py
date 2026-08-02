@@ -6,6 +6,7 @@ Provides automated analysis and recommendations for security investigations
 import json
 from datetime import timedelta
 from django.utils import timezone
+from django.db.models import Count
 from .models import Event, Alert, IOC, MitreTechnique, Investigation
 
 
@@ -420,3 +421,75 @@ class InvestigationAI:
         report['summary'] += f"Priority: {investigation.priority}. Status: {investigation.status}."
         
         return report
+
+    @staticmethod
+    def generate_dashboard_insights(time_window):
+        """Generate AI-powered insights for dashboard display"""
+        from .models import Event, Alert, IOC
+
+        insights = {
+            'threat_summary': '',
+            'risk_assessment': 'low',
+            'key_findings': [],
+            'recommendations': [],
+            'correlations': []
+        }
+
+        # Analyze recent events for patterns
+        recent_events = Event.objects.filter(time__gte=time_window)
+        event_count = recent_events.count()
+
+        if event_count == 0:
+            insights['threat_summary'] = "No security events detected in the last 24 hours."
+            return insights
+
+        # Analyze attack patterns
+        attack_types = recent_events.values('event_type').annotate(
+            count=Count('id')
+        ).order_by('-count')
+
+        # Check for brute force patterns
+        brute_force_events = recent_events.filter(event_type='brute_force').count()
+        if brute_force_events > 10:
+            insights['key_findings'].append(f"Brute force attack detected: {brute_force_events} attempts")
+            insights['risk_assessment'] = 'high'
+            insights['recommendations'].append("Implement account lockout policies")
+
+        # Check for SQL injection patterns
+        sql_injection = recent_events.filter(event_type='sql_injection').count()
+        if sql_injection > 0:
+            insights['key_findings'].append(f"SQL injection attempts: {sql_injection}")
+            insights['risk_assessment'] = max(insights['risk_assessment'], 'medium')
+            insights['recommendations'].append("Review input validation and WAF rules")
+
+        # Check for port scanning
+        port_scans = recent_events.filter(event_type='port_scan').count()
+        if port_scans > 20:
+            insights['key_findings'].append(f"Port scanning activity: {port_scans} attempts")
+            insights['recommendations'].append("Review firewall rules and network segmentation")
+
+        # Analyze source IP patterns
+        top_attackers = recent_events.values('source_ip').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+
+        if len(top_attackers) > 0:
+            top_attacker = top_attackers[0]
+            if top_attacker['count'] > 50:
+                insights['key_findings'].append(f"High activity from {top_attacker['source_ip']}: {top_attacker['count']} events")
+                insights['correlations'].append(f"Investigate source IP {top_attacker['source_ip']} for coordinated attacks")
+
+        # Generate threat summary
+        if insights['risk_assessment'] == 'high':
+            insights['threat_summary'] = f"High threat activity detected. {event_count} security events in the last 24 hours."
+        elif insights['risk_assessment'] == 'medium':
+            insights['threat_summary'] = f"Moderate threat activity. {event_count} security events require attention."
+        else:
+            insights['threat_summary'] = f"Normal activity with {event_count} security events logged."
+
+        # Add general recommendations if none specific
+        if not insights['recommendations']:
+            insights['recommendations'].append("Continue monitoring for emerging threats")
+            insights['recommendations'].append("Review recent alerts for false positives")
+
+        return insights

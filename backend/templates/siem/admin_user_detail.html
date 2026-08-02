@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% block title %}Analyst: {{ analyst.username }}{% endblock %}
+{% block page_title %}Analyst Detail{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    {% if messages %}
+    {% for message in messages %}
+    <div
+        style="background:{% if message.tags == 'success' %}rgba(16,185,129,0.15); border-left:4px solid #10b981;{% else %}rgba(239,68,68,0.15); border-left:4px solid #ef4444;{% endif %}padding:12px 16px; border-radius:6px; margin-bottom:16px; color:var(--text-main); font-size:14px;">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Back + Header -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <a href="{% url 'admin_panel' %}" class="btn ghost small"><i class="ph ph-arrow-left"></i> Back to Admin
+            Panel</a>
+    </div>
+
+    <!-- Profile + Stats row -->
+    <div class="grid" style="margin-bottom:24px;">
+        <!-- Profile Card -->
+        <div class="card" style="grid-column:span 2;">
+            <div style="display:flex;align-items:center;gap:20px;margin-bottom:20px;">
+                <div
+                    style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:26px;flex-shrink:0;">
+                    {{ analyst.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <h2 style="margin:0;">{{ analyst.get_full_name|default:analyst.username }}</h2>
+                    <div style="color:var(--text-secondary);font-size:14px;">{{ analyst.email }}</div>
+                    <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
+                        {% if profile %}
+                        <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;">{{
+                            profile.get_role_display }}</span>
+                        {% if profile.department %}<span class="badge">{{ profile.department }}</span>{% endif %}
+                        {% endif %}
+                        {% if analyst.is_superuser %}<span class="badge"
+                            style="background:rgba(245,158,11,0.15);color:#f59e0b;">Superuser</span>{% endif %}
+                        {% if analyst.is_active %}
+                        <span style="font-size:12px;color:#10b981;"><i class="ph-fill ph-circle"
+                                style="font-size:8px;"></i> Active</span>
+                        {% else %}
+                        <span style="font-size:12px;color:#ef4444;"><i class="ph-fill ph-circle"
+                                style="font-size:8px;"></i> Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+                {% if profile %}
+                {% if profile.phone %}
+                <div>
+                    <div style="font-size:12px;color:var(--text-secondary);">Phone</div>
+                    <div style="font-size:14px;">{{ profile.phone }}</div>
+                </div>
+                {% endif %}
+                <div>
+                    <div style="font-size:12px;color:var(--text-secondary);">Timezone</div>
+                    <div style="font-size:14px;">{{ profile.timezone }}</div>
+                </div>
+                {% endif %}
+                <div>
+                    <div style="font-size:12px;color:var(--text-secondary);">Joined</div>
+                    <div style="font-size:14px;">{{ analyst.date_joined|date:"M d, Y" }}</div>
+                </div>
+                <div>
+                    <div style="font-size:12px;color:var(--text-secondary);">Last Login</div>
+                    <div style="font-size:14px;">{% if analyst.last_login %}{{ analyst.last_login|date:"M d, Y H:i" }}{%
+                        else %}Never{% endif %}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="card" style="text-align:center;">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;"><i class="ph ph-bell"></i> Alerts
+                Assigned</div>
+            <div style="font-size:32px;font-weight:700;color:#ef4444;">{{ total_alerts }}</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">{{ resolved_alerts }} resolved</div>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;"><i class="ph ph-folder-open"></i>
+                Investigations</div>
+            <div style="font-size:32px;font-weight:700;color:#3b82f6;">{{ total_investigations }}</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">{{ closed_investigations }} closed
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Actions -->
+    <div class="grid" style="margin-bottom:24px;">
+        <div class="card">
+            <h4><i class="ph ph-sliders"></i> Change Role</h4>
+            <form method="post" style="display:flex;gap:8px;align-items:flex-end;margin-top:12px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_role">
+                <div style="flex:1;">
+                    <label
+                        style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Role</label>
+                    <select name="role"
+                        style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text-main);font-size:14px;">
+                        {% for value, label in role_choices %}
+                        <option value="{{ value }}" {% if profile and profile.role==value %}selected{% endif %}>{{ label
+                            }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn small">Update</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4><i class="ph ph-power"></i> Account Status</h4>
+            <p style="font-size:13px;color:var(--text-secondary);margin:8px 0 16px;">
+                Account is currently <strong
+                    style="color:{% if analyst.is_active %}#10b981{% else %}#ef4444{% endif %};">{% if analyst.is_active
+                    %}Active{% else %}Inactive{% endif %}</strong>.
+            </p>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle_active">
+                <button type="submit" class="btn small {% if analyst.is_active %}ghost{% endif %}"
+                    onclick="return confirm('Are you sure?')">
+                    {% if analyst.is_active %}<i class="ph ph-user-minus"></i> Deactivate Account{% else %}<i
+                        class="ph ph-user-plus"></i> Activate Account{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Alerts -->
+    <div class="card full-width" style="margin-bottom:16px;">
+        <h3 style="margin-bottom:16px;"><i class="ph ph-bell"></i> Assigned Alerts <span
+                style="font-weight:400;font-size:14px;color:var(--text-secondary);">(recent {{ alerts_assigned|length
+                }})</span></h3>
+        {% if alerts_assigned %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Alert Name</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>First Seen</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts_assigned %}
+                    <tr>
+                        <td style="font-weight:500;font-size:14px;">{{ alert.name }}</td>
+                        <td><span class="severity sev-{{ alert.severity }}">{{ alert.severity|title }}</span></td>
+                        <td><span class="badge">{{ alert.status }}</span></td>
+                        <td style="font-size:13px;color:var(--text-secondary);">{{ alert.first_seen|date:"M d, Y H:i" }}
+                        </td>
+                        <td><a href="{% url 'alert_detail' alert.id %}" class="btn ghost small">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center;color:var(--text-secondary);padding:24px;"><i class="ph ph-bell-slash"></i> No
+            alerts assigned</div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Investigations -->
+    <div class="card full-width" style="margin-bottom:16px;">
+        <h3 style="margin-bottom:16px;"><i class="ph ph-folder-open"></i> Owned Investigations <span
+                style="font-weight:400;font-size:14px;color:var(--text-secondary);">(recent {{
+                investigations_owned|length }})</span></h3>
+        {% if investigations_owned %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Case ID</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in investigations_owned %}
+                    <tr>
+                        <td style="font-family:'JetBrains Mono';font-size:13px;">{{ inv.case_id }}</td>
+                        <td style="font-weight:500;font-size:14px;">{{ inv.title }}</td>
+                        <td><span class="badge">{{ inv.status }}</span></td>
+                        <td><span class="severity sev-{{ inv.priority }}">{{ inv.priority|title }}</span></td>
+                        <td style="font-size:13px;color:var(--text-secondary);">{{ inv.created|date:"M d, Y" }}</td>
+                        <td><a href="{% url 'investigation_detail' inv.case_id %}" class="btn ghost small">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center;color:var(--text-secondary);padding:24px;"><i class="ph ph-folder"></i> No
+            investigations owned</div>
+        {% endif %}
+    </div>
+
+    <!-- Audit Log -->
+    <div class="card full-width">
+        <h3 style="margin-bottom:16px;"><i class="ph ph-clipboard-text"></i> Audit Log <span
+                style="font-weight:400;font-size:14px;color:var(--text-secondary);">(recent {{ audit_logs|length
+                }})</span></h3>
+        {% if audit_logs %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Action</th>
+                        <th>Resource</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in audit_logs %}
+                    <tr>
+                        <td style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-secondary);">{{
+                            log.timestamp|date:"M d H:i:s" }}</td>
+                        <td><span class="badge">{{ log.action_type }}</span></td>
+                        <td style="font-size:13px;">{{ log.resource_type }}</td>
+                        <td style="font-size:13px;max-width:320px;overflow:hidden;text-overflow:ellipsis;">{{
+                            log.description|truncatechars:80 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center;color:var(--text-secondary);padding:24px;"><i class="ph ph-clipboard"></i> No
+            audit log entries</div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

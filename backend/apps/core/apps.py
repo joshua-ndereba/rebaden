@@ -4,3 +4,7 @@ class CoreConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.core'
     verbose_name = "Core (SIEM) App"
+    
+    def ready(self):
+        """Register signals when app is ready"""
+        import apps.core.signals  # noqa

@@ -8,83 +8,188 @@
   <div class="top-row">
     <h2>Settings</h2>
     <div class="center">
-      <button class="btn"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+      <button class="btn" id="save-btn"><i class="ph ph-floppy-disk"></i> Save Changes</button>
     </div>
   </div>
 
+  <!-- Alerts -->
+  <div id="alert-container"></div>
+
   <div class="grid" style="grid-template-columns: 1fr 1fr;">
+    <!-- Profile Settings -->
     <div class="card">
       <h3>Profile Settings</h3>
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
-          <div class="avatar" style="width: 64px; height: 64px; font-size: 24px;">A</div>
+          <div class="avatar" style="width: 64px; height: 64px; font-size: 24px; background: var(--accent-primary); color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%;" id="profile-avatar">{{ request.user.first_name|first|upper }}</div>
           <div>
-            <button class="btn small ghost">Change Avatar</button>
+            <p id="profile-username" style="margin: 0; font-weight: 600;">{{ request.user.username }}</p>
+            <p id="profile-role" style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-muted);"></p>
           </div>
         </div>
+        
         <div>
-          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Display Name</label>
-          <input class="input" type="text" value="Analyst" style="width: 100%;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">First Name</label>
+          <input class="input" type="text" id="first-name" value="{{ request.user.first_name }}" style="width: 100%;">
         </div>
+        
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Last Name</label>
+          <input class="input" type="text" id="last-name" value="{{ request.user.last_name }}" style="width: 100%;">
+        </div>
+        
         <div>
           <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Email Address</label>
-          <input class="input" type="email" value="analyst@sentinel.local" style="width: 100%;">
+          <input class="input" type="email" id="email" value="{{ request.user.email }}" style="width: 100%;">
         </div>
-      </div>
-    </div>
 
-    <div class="card">
-      <h3>Appearance</h3>
-      <div
-        style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
         <div>
-          <div style="font-weight: 600;">Dark Mode</div>
-          <div class="small muted">Toggle application theme</div>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Department</label>
+          <input class="input" type="text" id="department" placeholder="e.g., Security Operations" style="width: 100%;">
         </div>
-        <label class="switch">
-          <input type="checkbox" checked id="theme-toggle">
-          <span class="slider round"></span>
-        </label>
-      </div>
-    </div>
 
-    <div class="card">
-      <h3>General Configuration</h3>
-      <div style="display: flex; flex-direction: column; gap: 16px;">
         <div>
-          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">SIEM Instance
-            Name</label>
-          <input class="input" type="text" value="DERE Prime" style="width: 100%;">
-        </div>
-        <div>
-          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Timezone</label>
-          <select class="input" style="width: 100%;">
-            <option>UTC</option>
-            <option>America/New_York</option>
-            <option>Europe/London</option>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Role</label>
+          <select class="input" id="role" style="width: 100%;">
+            <option value="analyst">Security Analyst</option>
+            <option value="investigator">Investigator</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Administrator</option>
+            <option value="viewer">Viewer</option>
           </select>
         </div>
       </div>
     </div>
 
+    <!-- Preferences -->
+    <div class="card">
+      <h3>Preferences</h3>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+          <div>
+            <div style="font-weight: 600;">Dark Mode</div>
+            <div class="small muted">Toggle application theme</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="theme-toggle" checked>
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Timezone</label>
+          <select class="input" id="timezone" style="width: 100%;">
+            <option value="UTC" selected>UTC</option>
+            <option value="America/New_York">America/New_York</option>
+            <option value="America/Chicago">America/Chicago</option>
+            <option value="America/Los_Angeles">America/Los_Angeles</option>
+            <option value="Europe/London">Europe/London</option>
+            <option value="Europe/Paris">Europe/Paris</option>
+            <option value="Asia/Tokyo">Asia/Tokyo</option>
+            <option value="Asia/Shanghai">Asia/Shanghai</option>
+            <option value="Australia/Sydney">Australia/Sydney</option>
+          </select>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+          <div>
+            <div style="font-weight: 600;">Notifications</div>
+            <div class="small muted">Enable desktop alerts</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="notifications-enabled" checked>
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+          <div>
+            <div style="font-weight: 600;">Email Alerts</div>
+            <div class="small muted">Send alerts via email</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="email-alerts">
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Alert Threshold</label>
+          <select class="input" id="alert-threshold" style="width: 100%;">
+            <option value="critical">Critical Only</option>
+            <option value="high">High & Critical</option>
+            <option value="medium">Medium & Above</option>
+            <option value="low">All Levels</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Ingestion -->
     <div class="card">
       <h3>Data Ingestion</h3>
       <div style="display: flex; flex-direction: column; gap: 16px;">
-        <div
-          style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+        <div style="padding: 12px; background: var(--bg-app); border-radius: 8px;">
+          <div style="font-weight: 600;">Log File Upload</div>
+          <div class="small muted" style="margin-bottom: 12px;">Upload and process log files</div>
+          <form id="log-upload-form" enctype="multipart/form-data">
+            <input type="file" id="log-file" accept=".log,.txt,.csv" style="margin-bottom: 8px;">
+            <select id="log-type" class="input" style="width: 100%; margin-bottom: 8px;">
+              <option value="auto">Auto-detect</option>
+              <option value="syslog">Syslog</option>
+              <option value="apache">Apache</option>
+              <option value="nginx">Nginx</option>
+              <option value="windows_event">Windows Event Log</option>
+              <option value="firewall">Firewall</option>
+              <option value="auth">Authentication</option>
+            </select>
+            <input type="text" id="source-name" class="input" placeholder="Source Name (optional)" style="width: 100%; margin-bottom: 8px;">
+            <button type="submit" class="btn" style="width: 100%;">Upload & Process</button>
+          </form>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
           <div>
             <div style="font-weight: 600;">Syslog Listener</div>
             <div class="small muted">Port 514 (UDP)</div>
           </div>
           <div style="color: var(--status-success); font-weight: 600;">Active</div>
         </div>
-        <div
-          style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
           <div>
             <div style="font-weight: 600;">API Collector</div>
-            <div class="small muted">/api/v1/collector</div>
+            <div class="small muted">/api/v1/log-upload/</div>
           </div>
           <div style="color: var(--status-success); font-weight: 600;">Active</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Configuration -->
+    <div class="card">
+      <h3>System Configuration</h3>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">SIEM Instance Name</label>
+          <input class="input" type="text" id="instance-name" value="REBADEN SIEM" style="width: 100%;">
+        </div>
+
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">API Version</label>
+          <div class="small muted" style="padding: 8px; background: var(--bg-app); border-radius: 4px;">v1.0</div>
+        </div>
+
+        <div id="api-status" style="padding: 12px; background: var(--bg-app); border-radius: 8px;">
+          <div style="font-weight: 600; margin-bottom: 8px;">API Status</div>
+          <div id="api-status-content">Loading...</div>
+        </div>
+
+        <div style="padding: 12px; background: var(--bg-app); border-radius: 8px;">
+          <div style="font-weight: 600; margin-bottom: 8px;">Upload Statistics</div>
+          <div id="upload-stats">
+            <p class="small">Fetching statistics...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -92,7 +197,6 @@
 </div>
 
 <style>
-  /* Toggle Switch Styles */
   .switch {
     position: relative;
     display: inline-block;
@@ -137,32 +241,248 @@
   input:checked+.slider:before {
     transform: translateX(24px);
   }
+
+  #upload-stats p {
+    margin: 4px 0;
+  }
+
+  .small {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  input[type="file"] {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    width: 100%;
+  }
 </style>
 
 <script>
-  const toggle = document.getElementById('theme-toggle');
-  toggle.addEventListener('change', (e) => {
-    if (e.target.checked) {
-      document.body.style.filter = 'none';
-    } else {
-      // Simple invert for "Light Mode" demo
-      document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+  const API_BASE = '/api/v1';
+
+  // Load user profile on page load
+  async function loadUserProfile() {
+    try {
+      const response = await fetch(`${API_BASE}/profile/me/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const profile = data.profile;
+        
+        // Update form fields
+        document.getElementById('role').value = profile.role || 'analyst';
+        document.getElementById('department').value = profile.department || '';
+        document.getElementById('timezone').value = profile.timezone || 'UTC';
+        document.getElementById('notifications-enabled').checked = profile.notifications_enabled !== false;
+        document.getElementById('email-alerts').checked = profile.email_alerts !== false;
+        document.getElementById('alert-threshold').value = profile.alert_severity_threshold || 'medium';
+        
+        // Update profile display
+        document.getElementById('profile-role').textContent = profile.role || 'Analyst';
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  }
+
+  // Save settings
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('save-btn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Saving...';
+
+    try {
+      const response = await fetch(`${API_BASE}/profile/update_profile/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({
+          first_name: document.getElementById('first-name').value,
+          last_name: document.getElementById('last-name').value,
+          email: document.getElementById('email').value,
+          role: document.getElementById('role').value,
+          department: document.getElementById('department').value,
+          timezone: document.getElementById('timezone').value,
+          notifications_enabled: document.getElementById('notifications-enabled').checked,
+          email_alerts: document.getElementById('email-alerts').checked,
+          alert_severity_threshold: document.getElementById('alert-threshold').value,
+        }),
+      });
+
+      if (response.ok) {
+        showAlert('Settings saved successfully!', 'success');
+        btn.innerHTML = '<i class="ph ph-check"></i> Saved';
+        
+        setTimeout(() => {
+          btn.innerHTML = originalHtml;
+          btn.disabled = false;
+        }, 2000);
+      } else {
+        showAlert('Error saving settings', 'error');
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showAlert('Error saving settings: ' + error.message, 'error');
+      btn.innerHTML = originalHtml;
+      btn.disabled = false;
     }
   });
 
-  const saveBtn = document.querySelector('.top-row .btn');
-  saveBtn.addEventListener('click', () => {
-    const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Saving...';
-    saveBtn.disabled = true;
+  // Handle log file upload
+  document.getElementById('log-upload-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const file = document.getElementById('log-file').files[0];
+    if (!file) {
+      showAlert('Please select a file', 'error');
+      return;
+    }
 
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('log_type', document.getElementById('log-type').value);
+    formData.append('source_name', document.getElementById('source-name').value || 'uploaded_logs');
+
+    try {
+      const response = await fetch(`${API_BASE}/log-upload/upload/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        showAlert(`Successfully processed ${data.events_created} events`, 'success');
+        document.getElementById('log-upload-form').reset();
+        loadUploadStats();
+      } else {
+        showAlert('Error uploading file', 'error');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showAlert('Error uploading file: ' + error.message, 'error');
+    }
+  });
+
+  // Load upload statistics
+  async function loadUploadStats() {
+    try {
+      const response = await fetch(`${API_BASE}/log-upload/stats/`, {
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const statsHtml = `
+          <p><strong>Total Uploads:</strong> ${data.total_uploads}</p>
+          <p><strong>Total Events:</strong> ${data.total_events}</p>
+          ${data.by_severity.map(s => `<p><strong>${s.severity}:</strong> ${s.count} events</p>`).join('')}
+        `;
+        document.getElementById('upload-stats').innerHTML = statsHtml;
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  }
+
+  // Check API status
+  async function checkApiStatus() {
+    try {
+      const response = await fetch(`${API_BASE}/assets/`, {
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+      });
+      
+      if (response.ok) {
+        document.getElementById('api-status-content').innerHTML = '<span style="color: var(--status-success);">✓ API is operational</span>';
+      } else {
+        document.getElementById('api-status-content').innerHTML = '<span style="color: var(--status-warning);">⚠ API is responding with errors</span>';
+      }
+    } catch (error) {
+      document.getElementById('api-status-content').innerHTML = '<span style="color: var(--status-error);">✗ API is offline</span>';
+    }
+  }
+
+  // Theme toggle
+  document.getElementById('theme-toggle').addEventListener('change', (e) => {
+    localStorage.setItem('theme', e.target.checked ? 'dark' : 'light');
+  });
+
+  // Utility function to get CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // Show alert message
+  function showAlert(message, type = 'info') {
+    const container = document.getElementById('alert-container');
+    const alertId = 'alert-' + Date.now();
+    
+    const colors = {
+      'success': 'background: var(--status-success); color: white;',
+      'error': 'background: var(--status-error); color: white;',
+      'warning': 'background: var(--status-warning); color: white;',
+      'info': 'background: var(--accent-primary); color: white;',
+    };
+
+    const alert = document.createElement('div');
+    alert.id = alertId;
+    alert.style.cssText = `
+      ${colors[type] || colors['info']}
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    `;
+    alert.innerHTML = `
+      <span>${message}</span>
+      <button onclick="document.getElementById('${alertId}').remove();" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">×</button>
+    `;
+    
+    container.appendChild(alert);
+    
     setTimeout(() => {
-      saveBtn.innerHTML = '<i class="ph ph-check"></i> Saved';
-      setTimeout(() => {
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-      }, 2000);
-    }, 1000);
+      const el = document.getElementById(alertId);
+      if (el) el.remove();
+    }, 4000);
+  }
+
+  // Initialize on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    loadUserProfile();
+    loadUploadStats();
+    checkApiStatus();
   });
 </script>
 {% endblock %}

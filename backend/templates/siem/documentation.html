@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Documentation{% endblock %}
+{% block page_title %}System Documentation{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="card full-width"
+        style="margin-bottom: 24px; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white;">
+        <h2 style="color: white; margin: 0 0 16px 0;"><i class="ph-bold ph-book-open"
+                style="vertical-align: middle;"></i> Rebaden SIEM Documentation Center</h2>
+        <p style="font-size: 15px; margin: 0; line-height: 1.5;">This hub provides access to all essential manuals,
+            setup instructions, and architecture overviews for deploying and managing the Rebaden SIEM.</p>
+    </div>
+
+    <div class="grid"
+        style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; align-items: start;">
+
+        <!-- Data Management -->
+        <div class="card" style="height: 100%;">
+            <h3 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="ph-bold ph-database" style="color: #3b82f6;"></i> Data Management
+            </h3>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                Overview of data handling, including how logs are ingested, where they are stored, data cleaning
+                practices, and how to delete records.
+            </p>
+            <div
+                style="background: rgba(59,130,246,0.1); border-left: 3px solid #3b82f6; padding: 12px; border-radius: 4px;">
+                <strong>Storage Defaults:</strong><br>
+                <span style="font-size: 12px; color: var(--text-secondary);">Local: SQLite (db.sqlite3)<br>Production:
+                    Supabase (PostgreSQL)</span>
+            </div>
+        </div>
+
+        <!-- Core Documentation -->
+        <div class="card" style="height: 100%;">
+            <h3 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="ph-bold ph-file-text" style="color: #10b981;"></i> Core Guides
+            </h3>
+            <ul style="list-style: none; padding: 0; margin: 0; font-size: 13px;">
+                <li style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+                    <strong style="color: var(--text-main);">README / Quick Start</strong><br>
+                    <span style="color: var(--text-secondary);">Instructions for initializing the project and starting
+                        the Django server.</span>
+                </li>
+                <li style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+                    <strong style="color: var(--text-main);">API Documentation</strong><br>
+                    <span style="color: var(--text-secondary);">Complete OpenAPI/Postman collection specifics for
+                        external data forwarders.</span>
+                </li>
+                <li style="margin-bottom: 0;">
+                    <strong style="color: var(--text-main);">SIEM Implementation Guide</strong><br>
+                    <span style="color: var(--text-secondary);">Detailed architecture notes on Django models, event
+                        parsing, and the core threat logic.</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Integration & Intelligence -->
+        <div class="card" style="height: 100%;">
+            <h3 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="ph-bold ph-brain" style="color: #f59e0b;"></i> Integrations
+            </h3>
+            <ul style="list-style: none; padding: 0; margin: 0; font-size: 13px;">
+                <li style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+                    <strong style="color: var(--text-main);">AI Threat Hunting</strong><br>
+                    <span style="color: var(--text-secondary);">Guidance on the integration of user behavior analytics
+                        (UEBA) and LLM-driven intel.</span>
+                </li>
+                <li style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+                    <strong style="color: var(--text-main);">Kafka & Ollama Architecture</strong><br>
+                    <span style="color: var(--text-secondary);">Design notes detailing the real-time event pipeline and
+                        local LLM agent hookups.</span>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- Note box -->
+    <div class="card full-width" style="margin-top: 24px; padding: 24px;">
+        <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <i class="ph-bold ph-info" style="font-size: 24px; color: #8b5cf6;"></i>
+            <div>
+                <h4 style="margin: 0 0 8px 0;">Looking for markdown files?</h4>
+                <p style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                    The raw text for all these guides resides in the <code>/documentation/</code> directory at the root
+                    of the project source code. You can browse these files directly in your IDE or GitHub for full
+                    technical configurations. Obsolete files have been archived in <code>/not_needed/</code>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

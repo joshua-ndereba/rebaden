@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}UEBA{% endblock %}
+{% block page_title %}User & Entity Behavior Analytics{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>Behavior Analytics</h2>
+    </div>
+
+    <!-- High Risk Users -->
+    {% if high_risk_users %}
+    <div class="card full-width" style="margin-bottom: 24px;">
+        <h3 style="color: var(--status-error);"><i class="ph ph-warning"></i> High Risk Users</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Risk Score</th>
+                        <th>Login Count</th>
+                        <th>Last Activity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in high_risk_users %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ user.username }}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div
+                                    style="width: 60px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+                                    <div
+                                        style="height: 100%; width: {{ user.risk_score }}%; background: {% if user.risk_score >= 75 %}#ef4444{% elif user.risk_score >= 50 %}#f59e0b{% else %}#10b981{% endif %};">
+                                    </div>
+                                </div>
+                                <span style="font-weight: 600;">{{ user.risk_score }}</span>
+                            </div>
+                        </td>
+                        <td>{{ user.normal_login_count|default:0 }}</td>
+                        <td class="muted small">{{ user.updated|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Anomalies -->
+    <div class="card full-width">
+        <h3>Unreviewed Anomalies</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Severity</th>
+                        <th>Detected</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for anomaly in anomalies %}
+                    <tr>
+                        <td><span class="badge">{{ anomaly.anomaly_type }}</span></td>
+                        <td>{{ anomaly.description|truncatewords:15 }}</td>
+                        <td><span class="severity sev-{{ anomaly.severity }}">{{ anomaly.severity|title }}</span></td>
+                        <td class="muted small">{{ anomaly.detected_at|date:"Y-m-d H:i" }}</td>
+                        <td><a href="{% url 'anomaly_detail' anomaly.id %}" class="btn ghost small">Review</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="center muted" style="padding: 32px;">No unreviewed anomalies</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- User Baselines -->
+    <div class="card full-width">
+        <h3>User Behavior Baselines</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Risk Score</th>
+                        <th>Normal Hours</th>
+                        <th>Locations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for baseline in baselines %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ baseline.username }}</td>
+                        <td>{{ baseline.risk_score }}</td>
+                        <td class="muted small">{{ baseline.normal_login_hours|default:"Not established" }}</td>
+                        <td class="muted small">{{ baseline.normal_locations|default:"Not established" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="center muted" style="padding: 32px;">No baselines established</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

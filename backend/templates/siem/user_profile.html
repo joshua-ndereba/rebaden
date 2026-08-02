@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+{% block page_title %}User Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>Your Profile</h2>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <!-- Profile Info -->
+        <div class="card">
+            <h3>Profile Information</h3>
+            <form method="post" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
+                {% csrf_token %}
+                <input type="hidden" name="update_profile" value="1">
+                {% for field in profile_form %}
+                <div>
+                    <label style="font-weight: 500; font-size: 14px; display: block; margin-bottom: 6px;">{{ field.label
+                        }}</label>
+                    <input class="input" type="{{ field.field.widget.input_type|default:'text' }}"
+                        name="{{ field.name }}" value="{{ field.value|default:'' }}" style="width: 100%;">
+                </div>
+                {% endfor %}
+                <button class="btn" type="submit" style="align-self: flex-start;">Save Changes</button>
+            </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card">
+            <h3>Change Password</h3>
+            <form method="post" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
+                {% csrf_token %}
+                <input type="hidden" name="change_password" value="1">
+                {% for field in password_form %}
+                <div>
+                    <label style="font-weight: 500; font-size: 14px; display: block; margin-bottom: 6px;">{{ field.label
+                        }}</label>
+                    <input class="input" type="password" name="{{ field.name }}" style="width: 100%;">
+                </div>
+                {% endfor %}
+                <button class="btn" type="submit" style="align-self: flex-start;">Update Password</button>
+            </form>
+        </div>
+
+        <!-- Activity Stats -->
+        <div class="card full-width">
+            <h3>Your Activity</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
+                <div style="text-align: center;">
+                    <div class="metric">{{ investigations_owned }}</div>
+                    <div class="muted small">Investigations Owned</div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="metric">{{ alerts_assigned }}</div>
+                    <div class="muted small">Alerts Assigned</div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="metric">{{ user_logins }}</div>
+                    <div class="muted small">Total Logins</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card full-width">
+            <h3>Recent Actions</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
+                {% for action in user_actions %}
+                <div
+                    style="display: flex; justify-content: space-between; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px;">
+                    <span>{{ action.description }}</span>
+                    <span class="muted">{{ action.timestamp|date:"M d, H:i" }}</span>
+                </div>
+                {% empty %}
+                <div class="muted center" style="padding: 32px;">No recent activity</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

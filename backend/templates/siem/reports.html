@@ -29,8 +29,8 @@
                         {% for r in reports %}
                         <tr>
                             <td style="font-weight: 500;">{{ r.name }}</td>
-                            <td class="muted small">{{ r.generated }}</td>
-                            <td><span class="severity sev-low">{{ r.type }}</span></td>
+                            <td class="muted small">{{ r.generated_at }}</td>
+                            <td><span class="severity sev-low">{{ r.report_type }}</span></td>
                             <td>
                                 <button class="btn ghost small"><i class="ph ph-download-simple"></i> Download</button>
                             </td>

@@ -22,12 +22,15 @@
 
 <body>
     <div class="app-container">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
                     <i class="ph-fill ph-shield-check"></i>
                     <span>DERE</span>
                 </div>
+                <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" title="Toggle sidebar">
+                    <i class="ph ph-sidebar-simple" id="collapse-icon"></i>
+                </button>
                 <button class="icon-btn mobile-close" id="sidebar-close">
                     <i class="ph ph-x"></i>
                 </button>
@@ -37,74 +40,93 @@
                 <ul>
                     <li>
                         <a href="{% url 'dashboard' %}"
-                            class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                            title="Dashboard">
                             <i class="ph ph-squares-four"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'events' %}"
-                            class="{% if request.resolver_match.url_name == 'events' %}active{% endif %}">
+                            class="{% if request.resolver_match.url_name == 'events' %}active{% endif %}"
+                            title="Events">
                             <i class="ph ph-list-dashes"></i>
                             <span>Events</span>
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'alerts' %}"
-                            class="{% if request.resolver_match.url_name == 'alerts' %}active{% endif %}">
+                            class="{% if request.resolver_match.url_name == 'alerts' %}active{% endif %}"
+                            title="Alerts">
                             <i class="ph ph-bell"></i>
                             <span>Alerts</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'assets' %}"
-                            class="{% if request.resolver_match.url_name == 'assets' %}active{% endif %}">
-                            <i class="ph ph-desktop"></i>
-                            <span>Assets</span>
-                        </a>
-                    </li>
+
                     <li>
                         <a href="{% url 'investigations' %}"
-                            class="{% if request.resolver_match.url_name == 'investigations' %}active{% endif %}">
+                            class="{% if request.resolver_match.url_name == 'investigations' %}active{% endif %}"
+                            title="Investigations">
                             <i class="ph ph-magnifying-glass"></i>
                             <span>Investigations</span>
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'logs' %}"
-                            class="{% if request.resolver_match.url_name == 'logs' %}active{% endif %}">
+                            class="{% if request.resolver_match.url_name == 'logs' %}active{% endif %}" title="Logs">
                             <i class="ph ph-file-text"></i>
                             <span>Logs</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'hunting' %}"
-                            class="{% if request.resolver_match.url_name == 'hunting' %}active{% endif %}">
-                            <i class="ph ph-crosshair"></i>
-                            <span>Hunting</span>
-                        </a>
-                    </li>
+
                 </ul>
 
                 <div class="nav-divider"></div>
 
                 <ul>
                     <li>
+                        <a href="{% url 'documentation_page' %}"
+                            class="{% if request.resolver_match.url_name == 'documentation_page' %}active{% endif %}"
+                            title="Documentation & Help">
+                            <i class="ph ph-question"></i>
+                            <span>Help / Docs</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'settings' %}"
-                            class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+                            class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}"
+                            title="Settings">
                             <i class="ph ph-gear"></i>
                             <span>Settings</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{% url 'advanced_search' %}"
+                            class="{% if request.resolver_match.url_name == 'advanced_search' %}active{% endif %}"
+                            title="Search">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <span>Search</span>
+                        </a>
+                    </li>
+                    {% if request.user.is_superuser %}
+                    <li>
+                        <a href="{% url 'admin_panel' %}"
+                            class="{% if 'admin_panel' in request.resolver_match.url_name %}active{% endif %}"
+                            title="Admin Panel">
+                            <i class="ph ph-shield-check"></i>
+                            <span>Admin Panel</span>
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </nav>
 
             <div class="sidebar-footer">
                 <div class="user-profile">
-                    <div class="avatar">A</div>
+                    <div class="avatar">{{ request.user.username|slice:":1"|upper|default:"A" }}</div>
                     <div class="user-info">
-                        <span class="name">Analyst</span>
-                        <span class="role">Admin</span>
+                        <span class="name">{{ request.user.get_full_name|default:request.user.username }}</span>
+                        <span class="role">{% if request.user.is_superuser %}Admin{% else %}Analyst{% endif %}</span>
                     </div>
                 </div>
             </div>
@@ -121,8 +143,8 @@
                     <span class="crumb-current">{% block page_title %}Dashboard{% endblock %}</span>
                 </div>
                 <div class="top-actions">
-                    <button class="icon-btn"><i class="ph ph-bell"></i></button>
-                    <button class="icon-btn"><i class="ph ph-question"></i></button>
+                    <button class="icon-btn" id="notif-btn" title="Notifications"><i class="ph ph-bell"></i></button>
+                    <button class="icon-btn" id="help-btn" title="Help"><i class="ph ph-question"></i></button>
                 </div>
             </header>
 
@@ -133,29 +155,46 @@
     </div>
 
     <script>
-        // Simple sidebar toggle for mobile
-        const sidebar = document.querySelector('.sidebar');
+        // ── Mobile sidebar toggle ──────────────────────────────
+        const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('sidebar-toggle');
         const closeBtn = document.getElementById('sidebar-close');
 
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.add('open');
+        toggleBtn && toggleBtn.addEventListener('click', () => sidebar.classList.add('open'));
+        closeBtn && closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+
+        // ── Desktop sidebar collapse ───────────────────────────
+        const collapseBtn = document.getElementById('sidebar-collapse-btn');
+        const collapseIcon = document.getElementById('collapse-icon');
+        const COLLAPSED_KEY = 'siem_sidebar_collapsed';
+
+        function applySidebarState(collapsed) {
+            if (collapsed) {
+                sidebar.classList.add('sidebar-collapsed');
+                collapseIcon.className = 'ph ph-sidebar-simple';
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+                collapseIcon.className = 'ph ph-sidebar-simple';
+            }
+        }
+
+        // Restore saved state
+        const savedCollapsed = localStorage.getItem(COLLAPSED_KEY) === 'true';
+        applySidebarState(savedCollapsed);
+
+        collapseBtn && collapseBtn.addEventListener('click', () => {
+            const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+            const newState = !isCollapsed;
+            localStorage.setItem(COLLAPSED_KEY, newState);
+            applySidebarState(newState);
         });
 
-        closeBtn.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-        });
-
-        // Top Bar Interactions
-        const bellBtn = document.querySelector('.top-actions .icon-btn:first-child');
-        const helpBtn = document.querySelector('.top-actions .icon-btn:last-child');
-
-        bellBtn.addEventListener('click', () => {
+        // ── Top bar buttons ────────────────────────────────────
+        document.getElementById('notif-btn').addEventListener('click', () => {
             alert('No new notifications.');
         });
-
-        helpBtn.addEventListener('click', () => {
-            alert('Help & Documentation:\n\n1. Use the sidebar to navigate.\n2. Dashboard shows overview metrics.\n3. Events/Alerts show security data.\n4. Hunting allows running queries.\n5. Settings allows configuration.');
+        document.getElementById('help-btn').addEventListener('click', () => {
+            alert('Help & Documentation:\n\n1. Use the sidebar to navigate.\n2. Dashboard shows overview metrics.\n3. Events/Alerts show security data.\n4. Hunting allows running queries.\n5. Settings allows configuration.\n\nTip: Click the sidebar icon (←) to collapse/expand the sidebar.');
         });
     </script>
 </body>

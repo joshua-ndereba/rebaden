@@ -20,7 +20,7 @@ from .models import (
     MitreTactic, MitreTechnique, ComplianceFramework, ComplianceCheck,
     Report, AnomalyDetection, UserBehaviorBaseline, SavedSearch,
     AuditLog, NotificationChannel, NotificationRule, Evidence,
-    InvestigationTimeline, PlaybookExecution
+    InvestigationTimeline, PlaybookExecution, UserProfile, SystemSettings
 )
 
 from .forms import (
@@ -28,6 +28,8 @@ from .forms import (
     InvestigationNoteForm, AlertActionForm, SavedSearchForm, ReportGenerationForm,
     DetectionRuleForm, AdvancedSearchForm, EvidenceUploadForm
 )
+
+from .investigation_ai import InvestigationAI
 
 from .log_parser import LogParser, ThreatDetector
 from .report_generator import ReportGenerator
@@ -143,53 +145,168 @@ def api_home(request):
 
 @login_required
 def dashboard(request):
-    """Enhanced SIEM dashboard with real data."""
+    """Enhanced SIEM dashboard with real data and interactive analysis."""
     now = timezone.now()
     last_24h = now - timedelta(hours=24)
-    
-    # Get real metrics
+    last_7d = now - timedelta(days=7)
+    last_30d = now - timedelta(days=30)
+
+    # Core metrics
     total_events = Event.objects.filter(time__gte=last_24h).count()
     critical_alerts = Alert.objects.filter(severity='critical', status__in=['new', 'open']).count()
     high_alerts = Alert.objects.filter(severity='high', status__in=['new', 'open']).count()
     open_investigations = Investigation.objects.filter(status__in=['new', 'open', 'in_progress']).count()
-    
-    # Top alerts
-    top_alerts = Alert.objects.filter(status__in=['new', 'open']).values('name', 'severity').annotate(count=Count('id')).order_by('-count')[:5]
-    
-    # Recent critical events
-    recent_events = Event.objects.all().order_by('-time')[:10]
-    
-    # Top source IPs
-    top_sources_raw = Event.objects.filter(source_ip__isnull=False).values('source_ip').annotate(count=Count('id')).order_by('-count')[:5]
-    top_sources = [{'ip': item['source_ip'], 'events': item['count']} for item in top_sources_raw]
-    
-    # MITRE ATT&CK coverage
+
+    # Event analysis by type (from log parsing)
+    event_types = Event.objects.filter(time__gte=last_24h).values('event_type').annotate(
+        count=Count('id')
+    ).order_by('-count')[:10]
+
+    # Attack pattern analysis
+    attack_patterns = Event.objects.filter(
+        time__gte=last_24h,
+        event_type__in=['sql_injection', 'xss', 'brute_force', 'port_scan', 'malware']
+    ).values('event_type').annotate(
+        count=Count('id'),
+        severity=Count('id')  # We'll use count as proxy for severity
+    ).order_by('-count')
+
+    # Calculate max count for progress bars
+    max_attack_count = attack_patterns[0]['count'] if attack_patterns else 1
+
+    # Add color classes for bars
+    attack_patterns_list = list(attack_patterns.values('event_type', 'count'))
+    for pattern in attack_patterns_list:
+        if pattern['event_type'] == 'sql_injection':
+            pattern['color_class'] = 'bar-sql-injection'
+        elif pattern['event_type'] == 'brute_force':
+            pattern['color_class'] = 'bar-brute-force'
+        elif pattern['event_type'] == 'port_scan':
+            pattern['color_class'] = 'bar-port-scan'
+        else:
+            pattern['color_class'] = 'bar-other'
+
+    # Geographic analysis (top attacking countries)
+    geo_data = Event.objects.filter(
+        time__gte=last_24h,
+        source_ip__isnull=False
+    ).values('source_ip').annotate(
+        count=Count('id')
+    ).order_by('-count')[:20]
+
+    # Time-based analysis for charts
+    hourly_events = []
+    for i in range(24):
+        hour_start = now - timedelta(hours=i+1)
+        hour_end = now - timedelta(hours=i)
+        count = Event.objects.filter(time__gte=hour_start, time__lt=hour_end).count()
+        hourly_events.append({
+            'hour': hour_start.strftime('%H:00'),
+            'count': count
+        })
+    hourly_events.reverse()
+
+    # Alert trends
+    alert_trends = []
+    for i in range(7):
+        day_start = now - timedelta(days=i+1)
+        day_end = now - timedelta(days=i)
+        count = Alert.objects.filter(first_seen__gte=day_start, first_seen__lt=day_end).count()
+        alert_trends.append({
+            'day': day_start.strftime('%m/%d'),
+            'count': count
+        })
+    alert_trends.reverse()
+
+    # Top alerts with analysis
+    top_alerts = Alert.objects.filter(status__in=['new', 'open']).values(
+        'name', 'severity'
+    ).annotate(count=Count('id')).order_by('-count')[:8]
+
+    # Recent events with enhanced context
+    # recent_events = Event.objects.select_related('alert').all().order_by('-time')[:15]
+    # Use prefetch_related for the reverse ManyToMany relationship
+    recent_events = Event.objects.select_related('log_source', 'asset').prefetch_related('alert_set').order_by('-time')[:15]
+    # Top source IPs with threat intelligence context
+    top_sources_raw = Event.objects.filter(source_ip__isnull=False).values('source_ip').annotate(
+        count=Count('id'),
+        alerts=Count('alert', distinct=True)
+    ).order_by('-count')[:10]
+    top_sources = [{
+        'ip': item['source_ip'],
+        'events': item['count'],
+        'alerts': item['alerts'],
+        'threat_level': 'high' if item['alerts'] > 5 else 'medium' if item['alerts'] > 2 else 'low'
+    } for item in top_sources_raw]
+
+    # AI insights and correlations
+    ai_insights = InvestigationAI.generate_dashboard_insights(last_24h)
+
+    # Threat hunting opportunities
+    threat_hunting = {
+        'unusual_traffic': Event.objects.filter(
+            time__gte=last_24h,
+            source_ip__in=top_sources_raw.values_list('source_ip', flat=True)[:3]
+        ).count(),
+        'lateral_movement': Event.objects.filter(
+            time__gte=last_24h,
+            event_type='lateral_movement'
+        ).count(),
+        'data_exfiltration': Event.objects.filter(
+            time__gte=last_24h,
+            event_type__in=['data_exfil', 'suspicious_upload']
+        ).count(),
+    }
+
+    # MITRE ATT&CK coverage and recent mappings
     mitre_coverage = MitreTechnique.objects.count()
-    
+    recent_mitre = MitreTechnique.objects.filter(
+        alert__first_seen__gte=last_7d
+    ).distinct().count()
+
     # Threat intelligence stats
     active_iocs = IOC.objects.filter(is_active=True).count()
     threat_actors = ThreatActor.objects.count()
-    
-    # Anomalies
+    ioc_matches_24h = IOC.objects.filter(
+        created__gte=last_24h
+    ).count()
+
+    # Anomalies and behavioral analysis
     unreviewed_anomalies = AnomalyDetection.objects.filter(is_reviewed=False).count()
-    
-    # Active alerts (new + open)
+    anomaly_trends = AnomalyDetection.objects.filter(
+        detected_at__gte=last_7d
+    ).values('anomaly_type').annotate(count=Count('id')).order_by('-count')
+
+    # Active alerts breakdown
     active_alerts = Alert.objects.filter(status__in=['new', 'open']).count()
-    
-    # Events per minute
+    alerts_by_severity = Alert.objects.filter(status__in=['new', 'open']).values('severity').annotate(
+        count=Count('id')
+    ).order_by('severity')
+
+    # Events per minute with trend
     events_per_minute = round(total_events / (24 * 60), 2) if total_events > 0 else 0
-    
-    # Organize into metrics dictionary for template
+    events_trend = "+12%"  # This would be calculated from historical data
+
+    # Organize into comprehensive metrics dictionary
     metrics = {
         'events_per_minute': events_per_minute,
+        'events_trend': events_trend,
         'active_alerts': active_alerts,
         'top_sources': top_sources,
         'recent_events': recent_events,
+        'event_types': list(event_types.values('event_type', 'count')),
+        'attack_patterns': list(attack_patterns.values('event_type', 'count')),
+        'hourly_events': hourly_events,
+        'alert_trends': alert_trends,
+        'alerts_by_severity': list(alerts_by_severity.values('severity', 'count')),
+        'geo_data': list(geo_data.values('source_ip', 'count')),
     }
-    
+
     context = {
         'metrics': metrics,
         'total_events_24h': total_events,
+        'total_events_alltime': Event.objects.count(),
+        'active_log_sources': LogSource.objects.filter(is_active=True).count(),
         'events_per_minute': events_per_minute,
         'critical_alerts': critical_alerts,
         'high_alerts': high_alerts,
@@ -198,12 +315,33 @@ def dashboard(request):
         'recent_events': recent_events,
         'top_sources': top_sources,
         'mitre_coverage': mitre_coverage,
+        'recent_mitre': recent_mitre,
         'active_iocs': active_iocs,
         'threat_actors': threat_actors,
+        'ioc_matches_24h': ioc_matches_24h,
         'unreviewed_anomalies': unreviewed_anomalies,
+        'anomaly_trends': anomaly_trends,
+        'ai_insights': ai_insights,
+        'threat_hunting': threat_hunting,
+        'event_types': list(event_types.values('event_type', 'count')),
+        'attack_patterns': attack_patterns_list,
+        'max_attack_count': max_attack_count,
+        'hourly_events': hourly_events,
+        'alert_trends': alert_trends,
+        'alerts_by_severity': list(alerts_by_severity.values('severity', 'count')),
+        'log_sources_with_counts': list(
+            LogSource.objects.annotate(event_count=Count('event')).order_by('-event_count')[:8]
+        ),
+        # JSON serialized data for JavaScript charts
+        'hourly_events_json': json.dumps(hourly_events),
+        'alerts_by_severity_json': json.dumps(list(alerts_by_severity.values('severity', 'count'))),
+        'event_types_json': json.dumps(list(event_types.values('event_type', 'count'))),
+        'alert_trends_json': json.dumps(alert_trends),
+        'top_sources_json': json.dumps([{'ip': s['ip'], 'events': s['events'], 'alerts': s['alerts']} for s in top_sources]),
     }
-    
+
     return render(request, 'siem/dashboard.html', context)
+
 
 
 
@@ -267,132 +405,125 @@ def events(request):
 
 @login_required
 def logs_view(request):
-    """Log ingestion and management with file upload."""
-    upload_form = LogUploadForm()
+    """Log file import — supports multiple files per upload."""
     upload_success = False
     upload_stats = None
-    
+
     if request.method == 'POST':
-        upload_form = LogUploadForm(request.POST, request.FILES)
-        if upload_form.is_valid():
-            log_file = request.FILES['log_file']
-            log_type = upload_form.cleaned_data['log_type']
-            source_name = upload_form.cleaned_data['source_name'] or log_file.name
-            
-            try:
-                # Read file content
-                file_content = log_file.read()
-                
-                # Parse log file
-                if log_type == 'auto':
-                    log_type = None  # Auto-detect
-                
-                events = LogParser.parse_file(file_content, log_type)
-                
-                # Detect threats
-                threats = ThreatDetector.detect_threats(events)
-                
-                # Create or get log source
-                log_source, created = LogSource.objects.get_or_create(
-                    name=source_name,
-                    defaults={
-                        'source_type': log_type or 'generic',
-                        'host': 'uploaded',
-                        'is_active': True,
-                    }
-                )
-                
-                # Save events to database
-                events_created = 0
-                alerts_created = 0
-                
-                for event_data in events:
-                    event = Event.objects.create(
-                        time=event_data.get('timestamp', timezone.now()),
-                        source=event_data.get('source', source_name),
-                        log_source=log_source,
-                        message=event_data.get('message', ''),
-                        raw_log=event_data.get('raw_log', ''),
-                        severity=event_data.get('severity', 'info'),
-                        category=event_data.get('category', 'system'),
-                        source_ip=event_data.get('source_ip'),
-                        dest_ip=event_data.get('dest_ip'),
-                        source_port=event_data.get('source_port'),
-                        dest_port=event_data.get('dest_port'),
-                        username=event_data.get('username', ''),
-                        process_name=event_data.get('process_name', ''),
-                        protocol=event_data.get('protocol', ''),
-                        action=event_data.get('action', ''),
-                        result=event_data.get('result', ''),
+        log_files = request.FILES.getlist('log_file')
+        log_type = request.POST.get('log_type', 'auto')
+        source_name_base = request.POST.get('source_name', '').strip()
+
+        if not log_files:
+            messages.error(request, 'Please select at least one log file.')
+        else:
+            total_events = 0
+            total_alerts = 0
+            total_threats = 0
+            file_names = []
+
+            for log_file in log_files:
+                source_name = source_name_base or log_file.name
+                effective_log_type = None if log_type == 'auto' else log_type
+
+                try:
+                    file_content = log_file.read()
+                    events = LogParser.parse_file(file_content, effective_log_type)
+                    threats = ThreatDetector.detect_threats(events)
+
+                    log_source, _ = LogSource.objects.get_or_create(
+                        name=source_name,
+                        defaults={
+                            'source_type': effective_log_type or 'generic',
+                            'host': 'uploaded',
+                            'is_active': True,
+                        }
                     )
-                    events_created += 1
-                
-                
-                # Create alerts for detected threats
-                for threat in threats:
-                    # Use the description from threat detector if available
-                    description = threat.get('description', f"Threat detected in uploaded logs")
-                    
-                    # Add additional context based on threat type
-                    if 'source_ip' in threat:
-                        description += f" | Source IP: {threat['source_ip']}"
-                    if 'failed_attempts' in threat:
-                        description += f" | Failed Attempts: {threat['failed_attempts']}"
-                    if 'ports_scanned' in threat:
-                        description += f" | Ports Scanned: {threat['ports_scanned']}"
-                    if 'request_count' in threat:
-                        description += f" | Request Count: {threat['request_count']}"
-                    if 'tool' in threat:
-                        description += f" | Tool: {threat['tool']}"
-                    
-                    alert = Alert.objects.create(
-                        name=f"{threat['type'].replace('_', ' ').title()}",
-                        description=description,
-                        severity=threat.get('severity', 'medium'),
-                        status='new',
+
+                    events_created = 0
+                    alerts_created = 0
+
+                    for event_data in events:
+                        Event.objects.create(
+                            time=event_data.get('timestamp', timezone.now()),
+                            source=event_data.get('source', source_name),
+                            log_source=log_source,
+                            message=event_data.get('message', ''),
+                            raw_log=event_data.get('raw_log', ''),
+                            severity=event_data.get('severity', 'info'),
+                            category=event_data.get('category', 'system'),
+                            source_ip=event_data.get('source_ip'),
+                            dest_ip=event_data.get('dest_ip'),
+                            source_port=event_data.get('source_port'),
+                            dest_port=event_data.get('dest_port'),
+                            username=event_data.get('username', ''),
+                            process_name=event_data.get('process_name', ''),
+                            protocol=event_data.get('protocol', ''),
+                            action=event_data.get('action', ''),
+                            result=event_data.get('result', ''),
+                        )
+                        events_created += 1
+
+                    for threat in threats:
+                        description = threat.get('description', 'Threat detected in uploaded logs')
+                        if 'source_ip' in threat:
+                            description += f" | Source IP: {threat['source_ip']}"
+                        if 'failed_attempts' in threat:
+                            description += f" | Failed Attempts: {threat['failed_attempts']}"
+                        if 'ports_scanned' in threat:
+                            description += f" | Ports Scanned: {threat['ports_scanned']}"
+                        if 'request_count' in threat:
+                            description += f" | Request Count: {threat['request_count']}"
+                        if 'tool' in threat:
+                            description += f" | Tool: {threat['tool']}"
+
+                        alert = Alert.objects.create(
+                            name=f"{threat['type'].replace('_', ' ').title()}",
+                            description=description,
+                            severity=threat.get('severity', 'medium'),
+                            status='new',
+                        )
+                        if 'event' in threat:
+                            related_event = Event.objects.filter(
+                                raw_log=threat['event'].get('raw_log')
+                            ).first()
+                            if related_event:
+                                alert.related_events.add(related_event)
+                        alerts_created += 1
+
+                    log_source.events_received += events_created
+                    log_source.last_event_time = timezone.now()
+                    log_source.save()
+
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='create',
+                        resource_type='log_upload',
+                        description=f'Uploaded log file: {log_file.name} ({events_created} events, {alerts_created} alerts)'
                     )
-                    
-                    # Link related event if available
-                    if 'event' in threat:
-                        # Find the corresponding saved event
-                        related_event = Event.objects.filter(
-                            raw_log=threat['event'].get('raw_log')
-                        ).first()
-                        if related_event:
-                            alert.related_events.add(related_event)
-                    
-                    alerts_created += 1
-                
-                # Update log source statistics
-                log_source.events_received += events_created
-                log_source.last_event_time = timezone.now()
-                log_source.save()
-                
-                # Log the upload
-                AuditLog.objects.create(
-                    user=request.user,
-                    action_type='create',
-                    resource_type='log_upload',
-                    description=f'Uploaded log file: {log_file.name} ({events_created} events, {alerts_created} alerts)'
-                )
-                
+
+                    total_events += events_created
+                    total_alerts += alerts_created
+                    total_threats += len(threats)
+                    file_names.append(log_file.name)
+
+                except Exception as e:
+                    messages.error(request, f'Error processing {log_file.name}: {str(e)}')
+
+            if file_names:
                 upload_success = True
+                files_label = ', '.join(file_names) if len(file_names) <= 3 else f'{len(file_names)} files'
                 upload_stats = {
-                    'file_name': log_file.name,
-                    'file_size': log_file.size,
-                    'events_created': events_created,
-                    'alerts_created': alerts_created,
-                    'threats_detected': len(threats),
-                    'log_type': log_type or 'auto-detected',
+                    'file_name': files_label,
+                    'events_created': total_events,
+                    'alerts_created': total_alerts,
+                    'threats_detected': total_threats,
+                    'log_type': log_type,
                 }
-                
                 messages.success(
                     request,
-                    f'Successfully uploaded {log_file.name}: {events_created} events processed, {alerts_created} alerts created'
+                    f'Imported {len(file_names)} file(s): {total_events} events, {total_alerts} alerts, {total_threats} threats detected.'
                 )
-                
-            except Exception as e:
-                messages.error(request, f'Error processing log file: {str(e)}')
     
     log_sources = LogSource.objects.all().order_by('-last_event_time')
     recent_logs = Event.objects.all().order_by('-time')[:50]
@@ -400,7 +531,6 @@ def logs_view(request):
     context = {
         'log_sources': log_sources,
         'logs': recent_logs,
-        'upload_form': upload_form,
         'upload_success': upload_success,
         'upload_stats': upload_stats,
     }
@@ -460,6 +590,7 @@ def alerts(request):
         alerts_qs = alerts_qs.filter(severity=severity)
     
     alerts_qs = alerts_qs.order_by('-first_seen')
+    new_count = Alert.objects.filter(status='new').count()
     
     paginator = Paginator(alerts_qs, 20)
     page_number = request.GET.get('page')
@@ -469,6 +600,7 @@ def alerts(request):
         'page_obj': page_obj,
         'status': status,
         'severity': severity,
+        'new_count': new_count,
         'status_choices': Alert.STATUS_CHOICES,
         'severity_choices': [('low','Low'),('medium','Medium'),('high','High'),('critical','Critical')],
     }
@@ -579,17 +711,55 @@ def alert_detail(request, alert_id):
 
 @login_required
 def assets(request):
-    """Asset inventory view."""
+    """Asset inventory view — pure information, no log loading."""
+    if request.method == 'POST':
+        hostname = request.POST.get('hostname', '').strip()
+        ip = request.POST.get('ip', '').strip()
+        asset_type = request.POST.get('asset_type', 'server')
+        os_name = request.POST.get('os', '').strip()
+        owner = request.POST.get('owner', '').strip()
+        department = request.POST.get('department', '').strip()
+        criticality = request.POST.get('criticality', 'medium')
+        location = request.POST.get('location', '').strip()
+
+        if hostname and ip:
+            try:
+                Asset.objects.create(
+                    hostname=hostname,
+                    ip=ip,
+                    asset_type=asset_type,
+                    os=os_name,
+                    owner=owner,
+                    department=department,
+                    criticality=criticality,
+                    location=location,
+                    is_active=True,
+                )
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='create',
+                    resource_type='asset',
+                    description=f'Added asset: {hostname} ({ip})'
+                )
+                messages.success(request, f'Asset "{hostname}" added successfully.')
+            except Exception as e:
+                messages.error(request, f'Error adding asset: {str(e)}')
+        else:
+            messages.error(request, 'Hostname and IP address are required.')
+        return redirect('assets')
+
     asset_type = request.GET.get('type', '')
     criticality = request.GET.get('criticality', '')
-    
-    assets_qs = Asset.objects.all()
-    
+
+    assets_qs = Asset.objects.annotate(
+        alert_count=Count('alert', distinct=True)
+    ).all()
+
     if asset_type:
         assets_qs = assets_qs.filter(asset_type=asset_type)
     if criticality:
         assets_qs = assets_qs.filter(criticality=criticality)
-    
+
     context = {
         'assets': assets_qs,
         'asset_type': asset_type,
@@ -597,7 +767,7 @@ def assets(request):
         'asset_types': Asset.ASSET_TYPES,
         'criticality_levels': Asset.CRITICALITY_LEVELS,
     }
-    
+
     return render(request, 'siem/assets.html', context)
 
 
@@ -654,27 +824,33 @@ def ioc_detail(request, ioc_id):
 
 @login_required
 def investigations(request):
-    """List investigations/cases."""
-    status = request.GET.get('status', '')
+    """List investigations/cases with tab-based filtering."""
+    tab = request.GET.get('tab', 'ongoing')  # 'ongoing', 'closed', 'all'
     priority = request.GET.get('priority', '')
-    
+
     inv_qs = Investigation.objects.all()
-    
-    if status:
-        inv_qs = inv_qs.filter(status=status)
+
+    if tab == 'ongoing':
+        inv_qs = inv_qs.filter(status__in=['new', 'open', 'in_progress', 'pending'])
+    elif tab == 'closed':
+        inv_qs = inv_qs.filter(status__in=['resolved', 'closed'])
+    # tab == 'all' → no filter
+
     if priority:
         inv_qs = inv_qs.filter(priority=priority)
-    
+
     inv_qs = inv_qs.order_by('-created')
-    
+    ongoing_count = Investigation.objects.filter(status__in=['new', 'open', 'in_progress', 'pending']).count()
+
     context = {
         'investigations': inv_qs,
-        'status': status,
+        'tab': tab,
         'priority': priority,
+        'ongoing_count': ongoing_count,
         'status_choices': Investigation.STATUS_CHOICES,
         'priority_choices': Investigation.PRIORITY_CHOICES,
     }
-    
+
     return render(request, 'siem/investigations.html', context)
 
 
@@ -877,27 +1053,77 @@ def mitre_technique_detail(request, technique_id):
 
 @login_required
 def hunting(request):
-    """Threat hunting interface."""
+    """Threat hunting interface with live query builder."""
+    # Save query
+    if request.method == 'POST' and request.POST.get('action') == 'save_query':
+        query_name = request.POST.get('query_name', '').strip()
+        query_text = request.POST.get('query_text', '').strip()
+        if query_name and query_text:
+            SavedSearch.objects.create(
+                name=query_name,
+                query=query_text,
+                owner=request.user,
+                is_public=False,
+            )
+            messages.success(request, f'Query "{query_name}" saved.')
+        return redirect('hunting')
+
     saved_queries = SavedSearch.objects.filter(
         Q(owner=request.user) | Q(is_public=True)
     ).order_by('-updated')
-    
+
     # Execute query if provided
     results = []
     query = request.GET.get('query', '')
-    
+    sev_filter = request.GET.get('severity', '')
+    time_range = request.GET.get('time_range', '24h')
+
+    now = timezone.now()
+    time_limits = {'1h': timedelta(hours=1), '24h': timedelta(hours=24), '7d': timedelta(days=7), '30d': timedelta(days=30)}
+    since = now - time_limits.get(time_range, timedelta(hours=24))
+
+    results_qs = Event.objects.filter(time__gte=since)
     if query:
-        # Simple query execution (in production, use proper query parser)
-        results = Event.objects.filter(
-            Q(message__icontains=query) | Q(source__icontains=query)
-        ).order_by('-time')[:100]
-    
+        results_qs = results_qs.filter(
+            Q(message__icontains=query) | Q(source__icontains=query) |
+            Q(event_type__icontains=query) | Q(source_ip__icontains=query)
+        )
+    if sev_filter:
+        results_qs = results_qs.filter(severity=sev_filter)
+
+    results = results_qs.order_by('-time')[:200]
+
+    # Stats
+    results_count = results_qs.count()
+    sev_breakdown = results_qs.values('severity').annotate(count=Count('id')).order_by('-count') if query else []
+
+    # Geo points for the threat map (events with lat/lon or source IPs)
+    geo_points = list(Event.objects.filter(
+        time__gte=since,
+        source_geo_lat__isnull=False,
+        source_geo_lon__isnull=False
+    ).values('source_geo_lat', 'source_geo_lon', 'source_ip', 'event_type')[:100])
+
+    # Fall back to sample source IPs if no geo data
+    if not geo_points and results:
+        ip_counts = results_qs.exclude(source_ip__isnull=True).values('source_ip', 'event_type').annotate(
+            n=Count('id')
+        ).order_by('-n')[:20]
+        for item in ip_counts:
+            # Cannot do real geo lookup without external API; skip for now
+            pass
+
     context = {
         'saved_queries': saved_queries,
         'query': query,
         'results': results,
+        'results_count': results_count,
+        'sev_breakdown': sev_breakdown,
+        'sev_filter': sev_filter,
+        'time_range': time_range,
+        'geo_points_json': json.dumps(geo_points),
     }
-    
+
     return render(request, 'siem/hunting.html', context)
 
 
@@ -1039,16 +1265,21 @@ def generate_report(request):
 # ============================================================================
 
 @login_required
+@login_required
 def settings_view(request):
     """SIEM settings and configuration."""
     notification_channels = NotificationChannel.objects.all()
     notification_rules = NotificationRule.objects.all()
     log_sources = LogSource.objects.all()
     
+    # Get or create user profile
+    user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
     context = {
         'notification_channels': notification_channels,
         'notification_rules': notification_rules,
         'log_sources': log_sources,
+        'user_profile': user_profile,
     }
     
     return render(request, 'siem/settings.html', context)
@@ -1221,61 +1452,250 @@ def generate_report_view(request):
 
 
 # ============================================================================
+# ADMIN PANEL
+# ============================================================================
+
+@login_required
+def admin_panel(request):
+    """Custom SIEM admin panel for managing analysts. Superuser only."""
+    if not request.user.is_superuser:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("Access denied: Admin privileges required.")
+
+    now = timezone.now()
+    last_30d = now - timedelta(days=30)
+
+    # Gather all users with relevant statistics
+    users = User.objects.all().order_by('-date_joined')
+    user_stats = []
+
+    for user in users:
+        profile = UserProfile.objects.filter(user=user).first()
+        role = profile.role if profile else ('admin' if user.is_superuser else 'analyst')
+        alerts_count = Alert.objects.filter(assigned_to=user).count()
+        investigations_count = Investigation.objects.filter(owner=user).count()
+        recent_actions = AuditLog.objects.filter(user=user).count()
+
+        user_stats.append({
+            'user': user,
+            'profile': profile,
+            'role': role,
+            'alerts_assigned': alerts_count,
+            'investigations_owned': investigations_count,
+            'total_actions': recent_actions,
+            'last_login': user.last_login,
+        })
+
+    # System-wide stats
+    total_events = Event.objects.count()
+    active_alerts = Alert.objects.filter(status__in=['new', 'open', 'investigating']).count()
+    open_investigations = Investigation.objects.filter(status__in=['new', 'open', 'in_progress']).count()
+    active_sources = LogSource.objects.filter(is_active=True).count()
+
+    context = {
+        'user_stats': user_stats,
+        'total_events': total_events,
+        'active_alerts': active_alerts,
+        'open_investigations': open_investigations,
+        'active_sources': active_sources,
+        'total_analysts': users.count(),
+    }
+    return render(request, 'siem/admin_panel.html', context)
+
+
+@login_required
+def admin_user_detail(request, user_id):
+    """Detailed analyst view for admin. Superuser only."""
+    if not request.user.is_superuser:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("Access denied: Admin privileges required.")
+
+    analyst = get_object_or_404(User, pk=user_id)
+
+    # Handle role update
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'update_role':
+            new_role = request.POST.get('role')
+            profile, _ = UserProfile.objects.get_or_create(user=analyst)
+            profile.role = new_role
+            profile.save()
+            messages.success(request, f"Role updated for {analyst.username}")
+        elif action == 'toggle_active':
+            analyst.is_active = not analyst.is_active
+            analyst.save()
+            status = "activated" if analyst.is_active else "deactivated"
+            messages.success(request, f"Account {status} for {analyst.username}")
+        return redirect('admin_user_detail', user_id=user_id)
+
+    profile = UserProfile.objects.filter(user=analyst).first()
+    alerts_assigned = Alert.objects.filter(assigned_to=analyst).order_by('-first_seen')[:20]
+    investigations_owned = Investigation.objects.filter(owner=analyst).order_by('-created')[:20]
+    audit_logs = AuditLog.objects.filter(user=analyst).order_by('-timestamp')[:30]
+
+    # Stats
+    total_alerts = Alert.objects.filter(assigned_to=analyst).count()
+    resolved_alerts = Alert.objects.filter(assigned_to=analyst, status='resolved').count()
+    total_investigations = Investigation.objects.filter(owner=analyst).count()
+    closed_investigations = Investigation.objects.filter(owner=analyst, status__in=['resolved', 'closed']).count()
+
+    role_choices = [
+        ('analyst', 'Security Analyst'),
+        ('investigator', 'Investigator'),
+        ('admin', 'Administrator'),
+        ('viewer', 'Viewer'),
+    ]
+
+    context = {
+        'analyst': analyst,
+        'profile': profile,
+        'alerts_assigned': alerts_assigned,
+        'investigations_owned': investigations_owned,
+        'audit_logs': audit_logs,
+        'total_alerts': total_alerts,
+        'resolved_alerts': resolved_alerts,
+        'total_investigations': total_investigations,
+        'closed_investigations': closed_investigations,
+        'role_choices': role_choices,
+    }
+    return render(request, 'siem/admin_user_detail.html', context)
+
+
+# ============================================================================
 # ADVANCED SEARCH
 # ============================================================================
 
 @login_required
 def advanced_search(request):
-    """Advanced search across all SIEM data."""
+    """Advanced search across all SIEM data with working filters."""
     form = AdvancedSearchForm(request.GET or None)
-    results = []
+    results = {}
     search_performed = False
-    
-    if form.is_valid() and request.GET:
+
+    if request.GET.get('query') or request.GET.get('source_ip') or request.GET.get('severity') or request.GET.get('category'):
         search_performed = True
-        query = form.cleaned_data.get('query', '')
-        
-        # Search across multiple models
+        query = request.GET.get('query', '').strip()
+        severity_list = request.GET.getlist('severity')
+        category_list = request.GET.getlist('category')
+        source_ip = request.GET.get('source_ip', '').strip()
+        time_range = request.GET.get('time_range', '')
+
+        now = timezone.now()
+        time_limits = {
+            '1h': timedelta(hours=1),
+            '24h': timedelta(hours=24),
+            '7d': timedelta(days=7),
+            '30d': timedelta(days=30),
+        }
+
+        # ── Events ──
+        event_qs = Event.objects.all()
         if query:
-            # Search events
-            event_results = Event.objects.filter(
+            event_qs = event_qs.filter(
                 Q(message__icontains=query) |
                 Q(source__icontains=query) |
-                Q(username__icontains=query)
-            )[:50]
-            
-            # Search alerts
-            alert_results = Alert.objects.filter(
+                Q(username__icontains=query) |
+                Q(event_type__icontains=query) |
+                Q(source_ip__icontains=query)
+            )
+        if severity_list:
+            event_qs = event_qs.filter(severity__in=severity_list)
+        if category_list:
+            event_qs = event_qs.filter(category__in=category_list)
+        if source_ip:
+            event_qs = event_qs.filter(source_ip=source_ip)
+        if time_range and time_range in time_limits:
+            event_qs = event_qs.filter(time__gte=now - time_limits[time_range])
+        event_qs = event_qs.order_by('-time')
+
+        # Paginate events
+        paginator = Paginator(event_qs, 25)
+        page_number = request.GET.get('page', 1)
+        events_page = paginator.get_page(page_number)
+        event_count = paginator.count
+
+        # ── Alerts ──
+        alert_qs = Alert.objects.all()
+        if query:
+            alert_qs = alert_qs.filter(
                 Q(name__icontains=query) |
                 Q(description__icontains=query)
-            )[:50]
-            
-            # Search investigations
-            investigation_results = Investigation.objects.filter(
+            )
+        if severity_list:
+            alert_qs = alert_qs.filter(severity__in=severity_list)
+        if time_range and time_range in time_limits:
+            alert_qs = alert_qs.filter(first_seen__gte=now - time_limits[time_range])
+        alert_qs = alert_qs.order_by('-first_seen')[:50]
+        alert_count = alert_qs.count()
+
+        # ── Investigations ──
+        inv_qs = Investigation.objects.all()
+        if query:
+            inv_qs = inv_qs.filter(
                 Q(title__icontains=query) |
                 Q(description__icontains=query) |
                 Q(case_id__icontains=query)
-            )[:50]
-            
-            # Search IOCs
-            ioc_results = IOC.objects.filter(
+            )
+        inv_qs = inv_qs.order_by('-created')[:50]
+        inv_count = inv_qs.count()
+
+        # ── IOCs ──
+        ioc_qs = IOC.objects.all()
+        if query:
+            ioc_qs = ioc_qs.filter(
                 Q(value__icontains=query) |
                 Q(description__icontains=query)
-            )[:50]
-            
-            results = {
-                'events': event_results,
-                'alerts': alert_results,
-                'investigations': investigation_results,
-                'iocs': ioc_results,
-            }
-    
+            )
+        ioc_qs = ioc_qs[:50]
+        ioc_count = ioc_qs.count()
+
+        # Log the search
+        if query or source_ip:
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='search',
+                resource_type='advanced_search',
+                description=f'Search: "{query}" | severity={severity_list} | category={category_list} | ip={source_ip}'
+            )
+
+        results = {
+            'events': events_page,
+            'alerts': alert_qs,
+            'investigations': inv_qs,
+            'iocs': ioc_qs,
+        }
+        counts = {
+            'events': event_count,
+            'alerts': alert_count,
+            'investigations': inv_count,
+            'iocs': ioc_count,
+        }
+    else:
+        events_page = None
+        counts = {}
+
+    # Active filters for display
+    active_filters = {}
+    if request.GET.get('query'):
+        active_filters['Query'] = request.GET.get('query')
+    if request.GET.getlist('severity'):
+        active_filters['Severity'] = ', '.join(request.GET.getlist('severity'))
+    if request.GET.getlist('category'):
+        active_filters['Category'] = ', '.join(request.GET.getlist('category'))
+    if request.GET.get('source_ip'):
+        active_filters['Source IP'] = request.GET.get('source_ip')
+    if request.GET.get('time_range'):
+        active_filters['Time Range'] = request.GET.get('time_range')
+
     context = {
         'form': form,
         'results': results,
+        'counts': counts,
         'search_performed': search_performed,
+        'active_filters': active_filters,
+        'events_page': events_page,
     }
-    
+
     return render(request, 'siem/advanced_search.html', context)
 
 
@@ -1433,3 +1853,9 @@ def api_threat_map(request):
     ).values('source_geo_lat', 'source_geo_lon', 'severity', 'source_ip')[:100]
     
     return JsonResponse(list(events), safe=False)
+
+
+@login_required
+def documentation_page(request):
+    """Serve the central documentation and help hub."""
+    return render(request, 'siem/documentation.html')

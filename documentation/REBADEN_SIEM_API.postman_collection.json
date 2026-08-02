@@ -1,0 +1,523 @@
+{
+  "info": {
+    "name": "REBADEN SIEM API",
+    "description": "Complete API collection for REBADEN SIEM - Enterprise Security Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get Auth Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/",
+              "host": ["{{base_url}}"],
+              "path": ["auth", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assets",
+      "item": [
+        {
+          "name": "List All Assets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assets/",
+              "host": ["{{base_url}}"],
+              "path": ["assets", ""]
+            }
+          }
+        },
+        {
+          "name": "Get Asset by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assets/1/",
+              "host": ["{{base_url}}"],
+              "path": ["assets", "1", ""]
+            }
+          }
+        },
+        {
+          "name": "Create Asset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hostname\": \"newserver.local\",\n  \"ip\": \"192.168.1.100\",\n  \"asset_type\": \"server\",\n  \"os\": \"Ubuntu 20.04\",\n  \"criticality\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/assets/",
+              "host": ["{{base_url}}"],
+              "path": ["assets", ""]
+            }
+          }
+        },
+        {
+          "name": "Filter by Criticality",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assets/by_criticality/?level=critical",
+              "host": ["{{base_url}}"],
+              "path": ["assets", "by_criticality", ""],
+              "query": [
+                {
+                  "key": "level",
+                  "value": "critical"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "List All Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/alerts/",
+              "host": ["{{base_url}}"],
+              "path": ["alerts", ""]
+            }
+          }
+        },
+        {
+          "name": "Get Open Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/alerts/open_alerts/",
+              "host": ["{{base_url}}"],
+              "path": ["alerts", "open_alerts", ""]
+            }
+          }
+        },
+        {
+          "name": "Get Alert Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/alerts/1/",
+              "host": ["{{base_url}}"],
+              "path": ["alerts", "1", ""]
+            }
+          }
+        },
+        {
+          "name": "Create Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Suspicious Activity Detected\",\n  \"severity\": \"high\",\n  \"status\": \"new\",\n  \"description\": \"Multiple failed login attempts detected on DC1\",\n  \"source_ip\": \"203.0.113.45\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/alerts/",
+              "host": ["{{base_url}}"],
+              "path": ["alerts", ""]
+            }
+          }
+        },
+        {
+          "name": "Update Alert",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"investigating\",\n  \"severity\": \"critical\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/alerts/1/",
+              "host": ["{{base_url}}"],
+              "path": ["alerts", "1", ""]
+            }
+          }
+        },
+        {
+          "name": "Take Action on Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"assign\",\n  \"assigned_to\": 2,\n  \"notes\": \"Escalating to incident response\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/alerts/1/take_action/",
+              "host": ["{{base_url}}"],
+              "path": ["alerts", "1", "take_action", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "List Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/events/",
+              "host": ["{{base_url}}"],
+              "path": ["events", ""]
+            }
+          }
+        },
+        {
+          "name": "Filter Critical Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/events/?severity=critical",
+              "host": ["{{base_url}}"],
+              "path": ["events", ""],
+              "query": [
+                {
+                  "key": "severity",
+                  "value": "critical"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_type\": \"failed_login\",\n  \"severity\": \"high\",\n  \"source_ip\": \"192.168.1.50\",\n  \"description\": \"Failed login attempt on admin account\",\n  \"raw_log\": \"2026-04-07 09:30:45 - User admin login failed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/events/",
+              "host": ["{{base_url}}"],
+              "path": ["events", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "IOCs (Indicators of Compromise)",
+      "item": [
+        {
+          "name": "List IOCs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/iocs/",
+              "host": ["{{base_url}}"],
+              "path": ["iocs", ""]
+            }
+          }
+        },
+        {
+          "name": "Get Critical IOCs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/iocs/critical/",
+              "host": ["{{base_url}}"],
+              "path": ["iocs", "critical", ""]
+            }
+          }
+        },
+        {
+          "name": "Create IOC",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ioc_type\": \"ip\",\n  \"value\": \"203.0.113.45\",\n  \"severity\": \"critical\",\n  \"source\": \"AlienVault OTX\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/iocs/",
+              "host": ["{{base_url}}"],
+              "path": ["iocs", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Investigations",
+      "item": [
+        {
+          "name": "List Investigations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/investigations/",
+              "host": ["{{base_url}}"],
+              "path": ["investigations", ""]
+            }
+          }
+        },
+        {
+          "name": "Get Open Investigations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/investigations/open/",
+              "host": ["{{base_url}}"],
+              "path": ["investigations", "open", ""]
+            }
+          }
+        },
+        {
+          "name": "Create Investigation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"APT28 Campaign Investigation\",\n  \"severity\": \"critical\",\n  \"description\": \"Multiple phishing emails with malicious attachments\",\n  \"status\": \"open\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/investigations/",
+              "host": ["{{base_url}}"],
+              "path": ["investigations", ""]
+            }
+          }
+        },
+        {
+          "name": "Add Investigation Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note_text\": \"Found 15 similar emails in mail logs\",\n  \"note_type\": \"finding\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/investigations/1/add_note/",
+              "host": ["{{base_url}}"],
+              "path": ["investigations", "1", "add_note", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Detection Rules",
+      "item": [
+        {
+          "name": "List Detection Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/detection-rules/",
+              "host": ["{{base_url}}"],
+              "path": ["detection-rules", ""]
+            }
+          }
+        },
+        {
+          "name": "Get Enabled Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/detection-rules/enabled/",
+              "host": ["{{base_url}}"],
+              "path": ["detection-rules", "enabled", ""]
+            }
+          }
+        },
+        {
+          "name": "Create Detection Rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"High Failed Logins\",\n  \"rule_type\": \"threshold\",\n  \"severity\": \"high\",\n  \"rule_logic\": \"Failed logins > 5 in 5 minutes\",\n  \"threshold_value\": 5,\n  \"time_window\": 300,\n  \"is_enabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/detection-rules/",
+              "host": ["{{base_url}}"],
+              "path": ["detection-rules", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "MITRE ATT&CK",
+      "item": [
+        {
+          "name": "List MITRE Tactics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/mitre-tactics/",
+              "host": ["{{base_url}}"],
+              "path": ["mitre-tactics", ""]
+            }
+          }
+        },
+        {
+          "name": "List MITRE Techniques",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/mitre-techniques/",
+              "host": ["{{base_url}}"],
+              "path": ["mitre-techniques", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "List Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reports/",
+              "host": ["{{base_url}}"],
+              "path": ["reports", ""]
+            }
+          }
+        },
+        {
+          "name": "Generate Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Weekly Security Summary\",\n  \"report_type\": \"security_summary\",\n  \"format\": \"pdf\",\n  \"time_range_start\": \"2026-03-31T00:00:00Z\",\n  \"time_range_end\": \"2026-04-07T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reports/",
+              "host": ["{{base_url}}"],
+              "path": ["reports", ""]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Admin Panel{% endblock %}
+{% block page_title %}Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Breadcrumb note -->
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert-banner {{ message.tags }}"
+        style="background:{% if message.tags == 'success' %}rgba(16,185,129,0.15); border-left:4px solid #10b981;{% else %}rgba(239,68,68,0.15); border-left:4px solid #ef4444;{% endif %}padding:12px 16px; border-radius:6px; margin-bottom:16px; color:var(--text-main); font-size:14px;">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- System Overview Cards -->
+    <div class="grid" style="margin-bottom:24px;">
+        <div class="card" style="text-align:center;">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;"><i class="ph ph-users"></i> Total
+                Analysts</div>
+            <div class="metric" style="font-size:36px;">{{ total_analysts }}</div>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;"><i
+                    class="ph ph-bell-ringing"></i> Active Alerts</div>
+            <div class="metric" style="font-size:36px;color:#ef4444;">{{ active_alerts }}</div>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;"><i class="ph ph-folder-open"></i>
+                Open Investigations</div>
+            <div class="metric" style="font-size:36px;color:#f59e0b;">{{ open_investigations }}</div>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;"><i class="ph ph-list-dashes"></i>
+                Total Events</div>
+            <div class="metric" style="font-size:36px;color:#3b82f6;">{{ total_events }}</div>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;"><i class="ph ph-plug"></i> Active
+                Log Sources</div>
+            <div class="metric" style="font-size:36px;color:#10b981;">{{ active_sources }}</div>
+        </div>
+    </div>
+
+    <!-- Analysts Table -->
+    <div class="card full-width">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3><i class="ph ph-users"></i> Analyst Accounts</h3>
+            <a href="{% url 'register' %}" class="btn small"><i class="ph ph-plus"></i> New Analyst</a>
+        </div>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Alerts Assigned</th>
+                        <th>Investigations</th>
+                        <th>Total Actions</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in user_stats %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div class="avatar"
+                                    style="width:32px;height:32px;font-size:14px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;flex-shrink:0;">
+                                    {{ stat.user.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div style="font-weight:600;font-size:14px;">{{
+                                        stat.user.get_full_name|default:stat.user.username }}</div>
+                                    <div style="font-size:12px;color:var(--text-secondary);">{{ stat.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if stat.role == 'admin' %}
+                            <span class="badge" style="background:rgba(139,92,246,0.15);color:#8b5cf6;">Admin</span>
+                            {% elif stat.role == 'investigator' %}
+                            <span class="badge"
+                                style="background:rgba(59,130,246,0.15);color:#3b82f6;">Investigator</span>
+                            {% elif stat.role == 'viewer' %}
+                            <span class="badge" style="background:rgba(100,116,139,0.15);color:#64748b;">Viewer</span>
+                            {% else %}
+                            <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;">Analyst</span>
+                            {% endif %}
+                            {% if stat.user.is_superuser %}<span class="badge"
+                                style="background:rgba(245,158,11,0.15);color:#f59e0b;margin-left:4px;">Superuser</span>{%
+                            endif %}
+                        </td>
+                        <td>
+                            {% if stat.user.is_active %}
+                            <span style="color:#10b981;font-size:13px;"><i class="ph-fill ph-circle"
+                                    style="font-size:8px;"></i> Active</span>
+                            {% else %}
+                            <span style="color:#ef4444;font-size:13px;"><i class="ph-fill ph-circle"
+                                    style="font-size:8px;"></i> Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span style="font-weight:600;">{{ stat.alerts_assigned }}</span>
+                        </td>
+                        <td>
+                            <span style="font-weight:600;">{{ stat.investigations_owned }}</span>
+                        </td>
+                        <td>
+                            <span style="font-size:13px;color:var(--text-secondary);">{{ stat.total_actions }}</span>
+                        </td>
+                        <td style="font-size:13px;color:var(--text-secondary);">
+                            {% if stat.last_login %}{{ stat.last_login|date:"M d, Y H:i" }}{% else %}Never{% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'admin_user_detail' stat.user.id %}" class="btn ghost small">
+                                <i class="ph ph-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align:center;color:var(--text-secondary);padding:32px;">
+                            No users found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

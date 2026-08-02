@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}MITRE ATT&CK{% endblock %}
+{% block page_title %}MITRE ATT&CK Framework{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>MITRE ATT&CK Framework</h2>
+    </div>
+
+    {% for item in tactics_with_techniques %}
+    <div class="card full-width" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+                <h3 style="margin: 0;">{{ item.tactic.name }}</h3>
+                <span class="muted small">{{ item.tactic.tactic_id }}</span>
+            </div>
+            <span class="badge">{{ item.techniques|length }} techniques</span>
+        </div>
+        <p class="muted small" style="margin-bottom: 16px;">{{ item.tactic.description|truncatewords:30 }}</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            {% for tech in item.techniques %}
+            <a href="{% url 'mitre_technique_detail' tech.technique_id %}" class="badge"
+                style="text-decoration: none; padding: 6px 10px;">
+                {{ tech.technique_id }} · {{ tech.name }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="card full-width muted center" style="justify-content: center; padding: 48px;">
+        <i class="ph ph-database" style="font-size: 32px; margin-bottom: 8px;"></i>
+        <span>No MITRE ATT&CK data loaded. Run <code>python manage.py populate_mitre</code> to populate.</span>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

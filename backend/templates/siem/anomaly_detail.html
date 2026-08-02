@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Anomaly Detail{% endblock %}
+{% block page_title %}Anomaly Detail{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <div>
+            <h2>{{ anomaly.anomaly_type|title }} Anomaly</h2>
+            <span class="severity sev-{{ anomaly.severity }}" style="margin-top: 8px;">{{ anomaly.severity|title
+                }}</span>
+        </div>
+        <div class="center">
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="mark_reviewed">
+                <button class="btn ghost" type="submit"><i class="ph ph-check"></i> Mark Reviewed</button>
+            </form>
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="mark_false_positive">
+                <button class="btn" type="submit"><i class="ph ph-x"></i> False Positive</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card full-width">
+            <h3>Details</h3>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px;">
+                <div>
+                    <div class="muted small">Type</div>
+                    <div>{{ anomaly.anomaly_type }}</div>
+                </div>
+                <div>
+                    <div class="muted small">Detected At</div>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ anomaly.detected_at }}</div>
+                </div>
+                <div>
+                    <div class="muted small">Status</div>
+                    <div>{% if anomaly.is_reviewed %}Reviewed{% else %}Pending Review{% endif %}</div>
+                </div>
+                <div>
+                    <div class="muted small">Confidence</div>
+                    <div>{{ anomaly.confidence_score|default:"N/A" }}</div>
+                </div>
+            </div>
+            <div style="margin-top: 16px;">
+                <div class="muted small">Description</div>
+                <p>{{ anomaly.description }}</p>
+            </div>
+        </div>
+
+        <div class="card full-width">
+            <h3>Related Events ({{ related_events|length }})</h3>
+            {% if related_events %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source</th>
+                            <th>Message</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in related_events %}
+                        <tr>
+                            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ event.time|date:"Y-m-d H:i:s"
+                                }}</td>
+                            <td>{{ event.source }}</td>
+                            <td>{{ event.message|truncatewords:15 }}</td>
+                            <td><span class="severity sev-{{ event.severity }}">{{ event.severity }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="muted center" style="padding: 32px;">No related events found</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

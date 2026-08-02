@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ technique.technique_id }} - {{ technique.name }}{% endblock %}
+{% block page_title %}MITRE Technique Detail{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <div>
+            <h2>{{ technique.name }}</h2>
+            <span class="badge" style="margin-top: 8px;">{{ technique.technique_id }}</span>
+        </div>
+        <a href="{% url 'mitre_attack' %}" class="btn ghost"><i class="ph ph-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="grid">
+        <div class="card full-width">
+            <h3>Description</h3>
+            <p>{{ technique.description }}</p>
+            {% if technique.url %}
+            <a href="{{ technique.url }}" target="_blank" class="btn ghost small" style="margin-top: 12px;">
+                <i class="ph ph-arrow-square-out"></i> View on MITRE
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="card full-width">
+            <h3>Related Alerts ({{ related_alerts|length }})</h3>
+            {% if related_alerts %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>First Seen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in related_alerts %}
+                        <tr>
+                            <td><a href="{% url 'alert_detail' alert.id %}">{{ alert.name }}</a></td>
+                            <td><span class="severity sev-{{ alert.severity }}">{{ alert.severity|title }}</span></td>
+                            <td>{{ alert.status }}</td>
+                            <td class="muted small">{{ alert.first_seen|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="muted center" style="padding: 32px;">No alerts linked to this technique</div>
+            {% endif %}
+        </div>
+
+        {% if related_rules %}
+        <div class="card full-width">
+            <h3>Detection Rules</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
+                {% for rule in related_rules %}
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 6px;">
+                    <div>
+                        <div style="font-weight: 500;">{{ rule.name }}</div>
+                        <span class="muted small">{{ rule.rule_type }}</span>
+                    </div>
+                    <a href="{% url 'rule_detail' rule.id %}" class="btn ghost small">View</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Investigation{% endblock %}
+{% block page_title %}Create Investigation{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>New Investigation</h2>
+        <a href="{% url 'investigations' %}" class="btn ghost"><i class="ph ph-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="card full-width">
+        <form method="post" style="display: flex; flex-direction: column; gap: 16px;">
+            {% csrf_token %}
+            {% for field in form %}
+            <div>
+                <label style="font-weight: 500; font-size: 14px; display: block; margin-bottom: 6px;">{{ field.label
+                    }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                <div class="muted small" style="margin-top: 4px;">{{ field.help_text }}</div>
+                {% endif %}
+                {% for error in field.errors %}
+                <div style="color: var(--status-error); font-size: 13px; margin-top: 4px;">{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <button class="btn" type="submit" style="align-self: flex-start;">
+                <i class="ph ph-folder-plus"></i> Create Investigation
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .container select,
+    .container input[type="text"],
+    .container textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+        color: var(--text-main);
+        font-size: 14px;
+    }
+
+    .container textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+</style>
+{% endblock %}

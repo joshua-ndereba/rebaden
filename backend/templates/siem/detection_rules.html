@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Detection Rules{% endblock %}
+{% block page_title %}Detection Rules{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>Detection Rules</h2>
+        <form method="get" class="center" style="gap: 8px;">
+            <select class="input" name="type">
+                <option value="">All Types</option>
+                {% for val, label in rule_types %}
+                <option value="{{ val }}" {% if rule_type == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select class="input" name="enabled">
+                <option value="">All</option>
+                <option value="true" {% if is_enabled == 'true' %}selected{% endif %}>Enabled</option>
+                <option value="false" {% if is_enabled == 'false' %}selected{% endif %}>Disabled</option>
+            </select>
+            <button class="btn" type="submit"><i class="ph ph-funnel"></i> Filter</button>
+        </form>
+    </div>
+
+    <div class="card full-width" style="padding: 0; overflow: hidden;">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rule in rules %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ rule.name }}</td>
+                        <td><span class="badge">{{ rule.rule_type }}</span></td>
+                        <td><span class="severity sev-{{ rule.severity }}">{{ rule.severity|title }}</span></td>
+                        <td>
+                            {% if rule.is_enabled %}
+                            <span style="color: var(--status-success);">Enabled</span>
+                            {% else %}
+                            <span class="muted">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td><a href="{% url 'rule_detail' rule.id %}" class="btn ghost small">View</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="center muted" style="padding: 32px;">No detection rules found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

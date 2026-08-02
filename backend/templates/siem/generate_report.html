@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate Report{% endblock %}
+{% block page_title %}Generate Report{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>Generate Report</h2>
+        <a href="{% url 'reports' %}" class="btn ghost"><i class="ph ph-arrow-left"></i> Back to Reports</a>
+    </div>
+
+    <div class="card full-width">
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                {% for field in form %}
+                <div>
+                    <label style="font-weight: 500; font-size: 14px; display: block; margin-bottom: 6px;">{{ field.label
+                        }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="muted small" style="margin-top: 4px;">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <div style="color: var(--status-error); font-size: 13px; margin-top: 4px;">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                <button class="btn" type="submit" style="align-self: flex-start;">
+                    <i class="ph ph-file-text"></i> Generate & Download
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .container select,
+    .container input[type="date"],
+    .container input[type="text"] {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+        color: var(--text-main);
+        font-size: 14px;
+    }
+</style>
+{% endblock %}

@@ -134,6 +134,7 @@ class Event(models.Model):
     # Additional data
     tags = models.TextField(blank=True)  # JSON array
     custom_fields = models.TextField(blank=True)  # JSON object
+    event_type = models.CharField(max_length=64, blank=True, db_index=True)  # sql_injection, brute_force, port_scan, etc.
     
     created = models.DateTimeField(auto_now_add=True)
 
@@ -265,6 +266,24 @@ class MitreTechnique(models.Model):
 
     def __str__(self):
         return f"{self.technique_id} - {self.name}"
+
+
+class MITREMapping(models.Model):
+    """Mapping of events/alerts/IOCs to MITRE ATT&CK techniques"""
+    technique = models.ForeignKey(MitreTechnique, on_delete=models.CASCADE, related_name='mappings')
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, null=True, blank=True, related_name='mitre_mappings')
+    alert = models.ForeignKey('Alert', on_delete=models.CASCADE, null=True, blank=True, related_name='mitre_mappings')
+    ioc = models.ForeignKey(IOC, on_delete=models.CASCADE, null=True, blank=True, related_name='mitre_mappings')
+    confidence = models.FloatField(default=0.5)  # Confidence score 0-1
+    mapped_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    mapped_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = "MITRE Mappings"
+    
+    def __str__(self):
+        mapped_to = self.event or self.alert or self.ioc
+        return f"{self.technique.technique_id} -> {mapped_to}"
 
 
 # ============================================================================
@@ -770,3 +789,103 @@ class SavedSearch(models.Model):
 
     def __str__(self):
         return self.name
+
+
+# ============================================================================
+# USER & SYSTEM CONFIGURATION
+# ============================================================================
+
+class UserProfile(models.Model):
+    """Extended user profile information"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=32, choices=[
+        ('analyst', 'Security Analyst'),
+        ('investigator', 'Investigator'),
+        ('admin', 'Administrator'),
+        ('viewer', 'Viewer'),
+    ], default='analyst')
+    department = models.CharField(max_length=128, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    timezone = models.CharField(max_length=64, default='UTC')
+    
+    # Preferences
+    theme = models.CharField(max_length=32, choices=[('light', 'Light'), ('dark', 'Dark')], default='dark')
+    notifications_enabled = models.BooleanField(default=True)
+    email_alerts = models.BooleanField(default=True)
+    
+    # Metadata
+    last_login = models.DateTimeField(null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} ({self.role})"
+
+
+class SystemSettings(models.Model):
+    """System-wide configuration settings"""
+    setting_key = models.CharField(max_length=128, unique=True)
+    setting_value = models.TextField()
+    setting_type = models.CharField(max_length=32, choices=[
+        ('string', 'String'),
+        ('boolean', 'Boolean'),
+        ('integer', 'Integer'),
+        ('json', 'JSON'),
+    ], default='string')
+    description = models.TextField(blank=True)
+    
+    # Access control
+    is_sensitive = models.BooleanField(default=False)  # Hide in UI if True
+    updated_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "System Settings"
+
+    def __str__(self):
+        return self.setting_key
+
+
+class Anomaly(models.Model):
+    """Behavioral anomalies detected for users/assets"""
+    ANOMALY_TYPES = [
+        ('login_anomaly', 'Login Anomaly'),
+        ('data_exfiltration', 'Data Exfiltration'),
+        ('lateral_movement', 'Lateral Movement'),
+        ('privilege_escalation', 'Privilege Escalation'),
+        ('unusual_activity', 'Unusual Activity'),
+        ('high_risk_command', 'High Risk Command'),
+        ('resource_abuse', 'Resource Abuse'),
+    ]
+    
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='anomalies')
+    anomaly_type = models.CharField(max_length=64, choices=ANOMALY_TYPES)
+    description = models.TextField()
+    severity = models.CharField(max_length=16, choices=[
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    ], default='medium')
+    
+    # Detection details
+    detected_at = models.DateTimeField(auto_now_add=True)
+    detection_method = models.CharField(max_length=128)  # UEBA, ML model, etc.
+    confidence_score = models.FloatField(default=0.5)
+    
+    # Response
+    is_acknowledged = models.BooleanField(default=False)
+    acknowledged_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    
+    # Metadata
+    related_events = models.ManyToManyField(Event, blank=True)
+    related_alerts = models.ManyToManyField(Alert, blank=True)
+
+    class Meta:
+        ordering = ['-detected_at']
+        verbose_name_plural = "Anomalies"
+
+    def __str__(self):
+        return f"{self.anomaly_type} on {self.asset.hostname}"

@@ -16,12 +16,53 @@ ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-404finders-please-change')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# ============================================================================
+# DATABASE CONFIGURATION - Supabase (PostgreSQL) or SQLite for dev
+# ============================================================================
+# If DATABASE_URL is provided we prefer PostgreSQL via dj-database-url.
+# dj-database-url is optional for local development; if it's not
+# installed we fall back to SQLite to avoid hard failures during startup.
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    try:
+        import dj_database_url
+
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=DATABASE_URL,
+                conn_max_age=600,
+                conn_health_checks=True,
+            )
+        }
+    except ImportError:
+        # Fallback to SQLite if dj-database-url isn't installed
+        print("⚠️  WARNING: dj-database-url not installed. Install with: pip install dj-database-url psycopg2-binary")
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+                'OPTIONS': {'timeout': 20},
+            }
+        }
+    except Exception as e:
+        # Fallback to SQLite for other configuration errors
+        print(f"⚠️  WARNING: PostgreSQL configuration failed ({e}). Falling back to SQLite.")
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+                'OPTIONS': {'timeout': 20},
+            }
+        }
+else:
+    # Use SQLite for local development (default)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {'timeout': 20},
+        }
     }
-}
 
 INSTALLED_APPS = [
     'django.contrib.admin',

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Compliance{% endblock %}
+{% block page_title %}Compliance Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>Compliance Frameworks</h2>
+    </div>
+
+    <div class="grid">
+        {% for item in framework_status %}
+        <div class="card">
+            <h3 style="margin-bottom: 12px;">{{ item.framework.name }}</h3>
+            <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span class="muted small">Compliance Rate</span>
+                    <span style="font-weight: 600;  ">
+                        {{ item.compliance_rate }}%
+                    </span>
+
+                </div>
+                <div style="height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+                    <div style="height: 100%; width: {{ item.compliance_rate }}%; background: var(--primary);">
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                <div>
+                    <span style="color: var(--status-success);">● {{ item.passed }}</span> passed
+                </div>
+                <div>
+                    <span style="color: var(--status-error);">● {{ item.failed }}</span> failed
+                </div>
+                <div class="muted">{{ item.total_checks }} total</div>
+            </div>
+            <a href="{% url 'compliance_framework_detail' item.framework.id %}" class="btn ghost small"
+                style="width: 100%; text-align: center; margin-top: 16px;">View Details</a>
+        </div>
+        {% empty %}
+        <div class="card full-width muted center" style="justify-content: center; padding: 48px;">
+            <i class="ph ph-clipboard-text" style="font-size: 32px; margin-bottom: 8px;"></i>
+            <span>No compliance frameworks configured</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

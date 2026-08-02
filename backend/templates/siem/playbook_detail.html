@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Playbook: {{ playbook.name }}{% endblock %}
+{% block page_title %}Playbook Detail{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <div>
+            <h2>{{ playbook.name }}</h2>
+            <span class="muted small">{{ playbook.severity|default:"medium"|title }} Severity</span>
+        </div>
+        <a href="{% url 'playbooks' %}" class="btn ghost"><i class="ph ph-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="grid">
+        <div class="card full-width">
+            <h3>Description</h3>
+            <p>{{ playbook.description }}</p>
+        </div>
+
+        <div class="card full-width">
+            <h3>Response Steps</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+                {% for step in steps %}
+                <div
+                    style="display: flex; gap: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 6px;">
+                    <div
+                        style="min-width: 32px; height: 32px; border-radius: 50%; background: var(--accent-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">
+                        {{ forloop.counter }}
+                    </div>
+                    <div>
+                        <div style="font-weight: 500;">{{ step.title|default:step }}</div>
+                        {% if step.description %}<div class="muted small" style="margin-top: 4px;">{{ step.description
+                            }}</div>{% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="muted center" style="padding: 32px;">No steps defined</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if mitre_techniques %}
+        <div class="card full-width">
+            <h3>Related MITRE Techniques</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;">
+                {% for tech in mitre_techniques %}
+                <a href="{% url 'mitre_technique_detail' tech.technique_id %}" class="badge"
+                    style="text-decoration: none;">
+                    {{ tech.technique_id }} - {{ tech.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

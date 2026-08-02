@@ -20,8 +20,7 @@ urlpatterns = [
     path('alerts/', views.alerts, name='alerts'),
     path('alerts/<int:alert_id>/', views.alert_detail, name='alert_detail'),
     
-    # Assets
-    path('assets/', views.assets, name='assets'),
+
     
     # Threat Intelligence
     path('threat-intel/', views.threat_intel, name='threat_intel'),
@@ -41,8 +40,7 @@ urlpatterns = [
     path('mitre-attack/', views.mitre_attack, name='mitre_attack'),
     path('mitre-attack/<str:technique_id>/', views.mitre_technique_detail, name='mitre_technique_detail'),
     
-    # Hunting
-    path('hunting/', views.hunting, name='hunting'),
+
     
     # UEBA
     path('ueba/', views.ueba, name='ueba'),
@@ -54,10 +52,16 @@ urlpatterns = [
     
     # Reports
     path('reports/', views.reports, name='reports'),
-    path('reports/generate/', views.generate_report, name='generate_report'),
+
+    # Admin Panel
+    path('admin-panel/', views.admin_panel, name='admin_panel'),
+    path('admin-panel/user/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
     
     # Settings
     path('settings/', views.settings_view, name='settings'),
+    
+    # Documentation / Help
+    path('documentation/', views.documentation_page, name='documentation_page'),
     
     # User Profile & Account Management
     path('profile/', views.user_profile, name='user_profile'),

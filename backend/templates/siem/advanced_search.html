@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+
+{% block title %}Advanced Search{% endblock %}
+{% block page_title %}Advanced Search{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Search Form -->
+    <div class="card full-width" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom:16px;"><i class="ph ph-magnifying-glass"></i> Search Across All Data</h3>
+        <form method="get">
+            <!-- Main query row -->
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <input type="text" name="query" value="{{ request.GET.query }}"
+                    placeholder="Search events, alerts, investigations, IOCs..."
+                    style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text-main);font-size:14px;">
+                <input type="text" name="source_ip" value="{{ request.GET.source_ip }}" placeholder="Source IP"
+                    style="width:180px;padding:10px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text-main);font-size:14px;">
+                <select name="time_range"
+                    style="padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text-main);font-size:14px;">
+                    <option value="">All Time</option>
+                    <option value="1h" {% if request.GET.time_range=='1h' %}selected{% endif %}>Last Hour</option>
+                    <option value="24h" {% if request.GET.time_range=='24h' %}selected{% endif %}>Last 24 Hours</option>
+                    <option value="7d" {% if request.GET.time_range=='7d' %}selected{% endif %}>Last 7 Days</option>
+                    <option value="30d" {% if request.GET.time_range=='30d' %}selected{% endif %}>Last 30 Days</option>
+                </select>
+                <button class="btn" type="submit" id="search-btn">
+                    <i class="ph ph-magnifying-glass"></i> Search
+                </button>
+                {% if search_performed %}
+                <a href="{% url 'advanced_search' %}" class="btn ghost">
+                    <i class="ph ph-x"></i> Clear
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Severity + Category filters -->
+            <div style="display:flex;gap:24px;flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;">Severity
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        {% for val, label in form.severity.field.choices %}
+                        <label
+                            style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;background:var(--bg-secondary);padding:4px 10px;border-radius:20px;border:1px solid var(--border);">
+                            <input type="checkbox" name="severity" value="{{ val }}" {% if val in request.GET.severity
+                                %}checked{% endif %} style="margin:0;">
+                            {{ label }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;">Category
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        {% for val, label in form.category.field.choices %}
+                        <label
+                            style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;background:var(--bg-secondary);padding:4px 10px;border-radius:20px;border:1px solid var(--border);">
+                            <input type="checkbox" name="category" value="{{ val }}" {% if val in request.GET.category
+                                %}checked {% elif val in request.GET.getlist and val in request.GET.getlist.category
+                                %}checked {% endif %} style="margin:0;">
+                            {{ label }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if search_performed %}
+
+    <!-- Active Filters Chips -->
+    {% if active_filters %}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+        <span style="font-size:13px;color:var(--text-secondary);">Active filters:</span>
+        {% for key, val in active_filters.items %}
+        <span
+            style="background:rgba(59,130,246,0.15);color:#3b82f6;font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid rgba(59,130,246,0.3);">
+            {{ key }}: {{ val }}
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Result summary row -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+        {% if counts.events %}<span style="font-size:13px;color:var(--text-secondary);">Events: <strong>{{ counts.events
+                }}</strong></span>{% endif %}
+        {% if counts.alerts %}<span style="font-size:13px;color:var(--text-secondary);">• Alerts: <strong>{{
+                counts.alerts }}</strong></span>{% endif %}
+        {% if counts.investigations %}<span style="font-size:13px;color:var(--text-secondary);">• Investigations:
+            <strong>{{ counts.investigations }}</strong></span>{% endif %}
+        {% if counts.iocs %}<span style="font-size:13px;color:var(--text-secondary);">• IOCs: <strong>{{ counts.iocs
+                }}</strong></span>{% endif %}
+    </div>
+
+    <!-- Events Results -->
+    {% if results.events %}
+    <div class="card full-width" style="margin-bottom: 16px;">
+        <h3 style="margin-bottom:12px;"><i class="ph ph-list-dashes"></i> Events ({{ counts.events }})</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Source IP</th>
+                        <th>Event Type</th>
+                        <th>Message</th>
+                        <th>Category</th>
+                        <th>Severity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in results.events %}
+                    <tr>
+                        <td style="font-family: 'JetBrains Mono'; font-size: 12px;color:var(--text-secondary);">{{
+                            event.time|date:"Y-m-d H:i:s" }}</td>
+                        <td style="font-family:'JetBrains Mono';font-size:13px;">{{ event.source_ip|default:"—" }}</td>
+                        <td>
+                            {% if event.event_type %}
+                            <span class="badge">{{ event.event_type|title }}</span>
+                            {% else %}<span class="muted">—</span>{% endif %}
+                        </td>
+                        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;font-size:13px;">{{
+                            event.message|truncatechars:80 }}</td>
+                        <td style="font-size:13px;">{{ event.category }}</td>
+                        <td><span class="severity sev-{{ event.severity }}">{{ event.severity }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Events Pagination -->
+        {% if results.events.has_other_pages %}
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:16px;">
+            {% if results.events.has_previous %}
+            <a href="?{{ request.GET.urlencode }}&page={{ results.events.previous_page_number }}"
+                class="btn ghost small">« Previous</a>
+            {% endif %}
+            <span style="padding:6px 12px;font-size:13px;color:var(--text-secondary);">
+                Page {{ results.events.number }} of {{ results.events.paginator.num_pages }}
+            </span>
+            {% if results.events.has_next %}
+            <a href="?{{ request.GET.urlencode }}&page={{ results.events.next_page_number }}"
+                class="btn ghost small">Next »</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Alerts Results -->
+    {% if results.alerts %}
+    <div class="card full-width" style="margin-bottom: 16px;">
+        <h3 style="margin-bottom:12px;"><i class="ph ph-bell"></i> Alerts ({{ counts.alerts }})</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>First Seen</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in results.alerts %}
+                    <tr>
+                        <td style="font-weight: 500;font-size:14px;">{{ alert.name }}</td>
+                        <td><span class="severity sev-{{ alert.severity }}">{{ alert.severity|title }}</span></td>
+                        <td><span class="badge">{{ alert.status }}</span></td>
+                        <td style="font-size:13px;">{{ alert.assigned_to.username|default:"Unassigned" }}</td>
+                        <td style="font-size:13px;color:var(--text-secondary);">{{ alert.first_seen|date:"M d, Y H:i" }}
+                        </td>
+                        <td><a href="{% url 'alert_detail' alert.id %}" class="btn ghost small">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Investigations Results -->
+    {% if results.investigations %}
+    <div class="card full-width" style="margin-bottom: 16px;">
+        <h3 style="margin-bottom:12px;"><i class="ph ph-folder-open"></i> Investigations ({{ counts.investigations }})
+        </h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Case ID</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Owner</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in results.investigations %}
+                    <tr>
+                        <td style="font-family:'JetBrains Mono';font-size:13px;">{{ inv.case_id }}</td>
+                        <td style="font-weight:500;font-size:14px;">{{ inv.title }}</td>
+                        <td><span class="badge">{{ inv.status }}</span></td>
+                        <td><span class="severity sev-{{ inv.priority }}">{{ inv.priority|title }}</span></td>
+                        <td style="font-size:13px;">{{ inv.owner.username|default:"—" }}</td>
+                        <td style="font-size:13px;color:var(--text-secondary);">{{ inv.created|date:"M d, Y" }}</td>
+                        <td><a href="{% url 'investigation_detail' inv.case_id %}" class="btn ghost small">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- IOC Results -->
+    {% if results.iocs %}
+    <div class="card full-width" style="margin-bottom: 16px;">
+        <h3 style="margin-bottom:12px;"><i class="ph ph-target"></i> IOCs ({{ counts.iocs }})</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Value</th>
+                        <th>Threat Type</th>
+                        <th>Severity</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ioc in results.iocs %}
+                    <tr>
+                        <td><span class="badge">{{ ioc.ioc_type }}</span></td>
+                        <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ ioc.value|truncatechars:50 }}
+                        </td>
+                        <td style="font-size:13px;">{{ ioc.threat_type|default:"—" }}</td>
+                        <td><span class="severity sev-{{ ioc.severity }}">{{ ioc.severity|title }}</span></td>
+                        <td style="font-size:13px;">{{ ioc.confidence|title }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- No results state -->
+    {% if not results.events and not results.alerts and not results.investigations and not results.iocs %}
+    <div class="card full-width" style="text-align:center;padding:60px;">
+        <i class="ph ph-magnifying-glass"
+            style="font-size:40px;color:var(--text-secondary);display:block;margin-bottom:16px;"></i>
+        <h3 style="color:var(--text-secondary);margin:0 0 8px;">No results found</h3>
+        <p style="color:var(--text-secondary);font-size:13px;margin:0 0 20px;">Try adjusting your search terms or
+            filters.</p>
+        <div style="display:flex;gap:8px;justify-content:center;">
+            <a href="{% url 'advanced_search' %}" class="btn ghost small">Clear Filters</a>
+            <a href="{% url 'logs' %}" class="btn small"><i class="ph ph-upload"></i> Upload Logs</a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Initial state: no search yet -->
+    <div class="card full-width" style="text-align:center;padding:60px;">
+        <i class="ph ph-magnifying-glass"
+            style="font-size:48px;color:var(--text-secondary);display:block;margin-bottom:16px;opacity:0.4;"></i>
+        <h3 style="color:var(--text-secondary);margin:0 0 8px;">Search SIEM Data</h3>
+        <p style="color:var(--text-secondary);font-size:13px;">Search across events, alerts, investigations, and IOCs.
+            Use the filters above to narrow results.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

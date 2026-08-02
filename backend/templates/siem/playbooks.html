@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Playbooks{% endblock %}
+{% block page_title %}Incident Response Playbooks{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>Playbooks</h2>
+    </div>
+
+    <div class="grid">
+        {% for pb in playbooks %}
+        <div class="card">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <div style="background-color: var(--bg-hover); padding: 8px; border-radius: 8px;">
+                    <i class="ph ph-book-open" style="font-size: 24px; color: var(--accent-primary);"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 16px;">{{ pb.name }}</h3>
+                    <span class="muted small">{{ pb.severity|default:"medium"|title }} Severity</span>
+                </div>
+            </div>
+            <p class="muted small" style="margin-bottom: 16px;">{{ pb.description|truncatewords:25 }}</p>
+            <a href="{% url 'playbook_detail' pb.id %}" class="btn ghost small"
+                style="width: 100%; text-align: center;">View Playbook</a>
+        </div>
+        {% empty %}
+        <div class="card full-width muted center" style="justify-content: center; padding: 48px;">
+            <i class="ph ph-book-open" style="font-size: 32px; margin-bottom: 8px;"></i>
+            <span>No playbooks available</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

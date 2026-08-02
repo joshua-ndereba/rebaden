@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}IOC: {{ ioc.value }}{% endblock %}
+{% block page_title %}IOC Detail{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <div>
+            <h2>{{ ioc.value|truncatechars:60 }}</h2>
+            <div class="center" style="gap: 8px; margin-top: 8px;">
+                <span class="badge">{{ ioc.ioc_type }}</span>
+                <span class="severity sev-{{ ioc.severity }}">{{ ioc.severity|title }}</span>
+            </div>
+        </div>
+        <a href="{% url 'threat_intel' %}" class="btn ghost"><i class="ph ph-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="grid">
+        <div class="card full-width">
+            <h3>IOC Information</h3>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px;">
+                <div>
+                    <div class="muted small">Type</div>
+                    <div>{{ ioc.ioc_type }}</div>
+                </div>
+                <div>
+                    <div class="muted small">Value</div>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 13px; word-break: break-all;">{{ ioc.value }}
+                    </div>
+                </div>
+                <div>
+                    <div class="muted small">Source</div>
+                    <div>{{ ioc.source|default:"Manual entry" }}</div>
+                </div>
+                <div>
+                    <div class="muted small">Status</div>
+                    <div>{% if ioc.is_active %}Active{% else %}Inactive{% endif %}</div>
+                </div>
+            </div>
+            {% if ioc.description %}
+            <div style="margin-top: 16px;">
+                <div class="muted small">Description</div>
+                <p>{{ ioc.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card full-width">
+            <h3>Related Events ({{ related_events|length }})</h3>
+            {% if related_events %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source</th>
+                            <th>Message</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in related_events %}
+                        <tr>
+                            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ event.time|date:"Y-m-d H:i:s"
+                                }}</td>
+                            <td>{{ event.source }}</td>
+                            <td>{{ event.message|truncatewords:15 }}</td>
+                            <td><span class="severity sev-{{ event.severity }}">{{ event.severity }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="muted center" style="padding: 32px;">No related events found</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

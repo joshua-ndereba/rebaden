@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Threat Intelligence{% endblock %}
+{% block page_title %}Threat Intelligence{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <h2>Threat Intelligence</h2>
+    </div>
+
+    <!-- IOC Stats -->
+    <div class="grid">
+        <div class="card">
+            <h3>Active IOCs</h3>
+            <div class="metric">{{ ioc_stats.total }}</div>
+        </div>
+        <div class="card">
+            <h3>Critical IOCs</h3>
+            <div class="metric" style="color: var(--status-error);">{{ ioc_stats.critical }}</div>
+        </div>
+        <div class="card">
+            <h3>High Severity</h3>
+            <div class="metric" style="color: var(--status-warning);">{{ ioc_stats.high }}</div>
+        </div>
+    </div>
+
+    <!-- Threat Actors -->
+    <div class="card full-width">
+        <h3>Threat Actors</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+            {% for actor in threat_actors %}
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 6px;">
+                <div>
+                    <div style="font-weight: 600;">{{ actor.name }}</div>
+                    <div class="muted small">{{ actor.description|truncatewords:20 }}</div>
+                </div>
+                <span class="badge">{{ actor.sophistication_level|default:"Unknown" }}</span>
+            </div>
+            {% empty %}
+            <div class="muted center" style="padding: 32px;">No threat actors tracked</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- IOCs Table -->
+    <div class="card full-width">
+        <h3>Indicators of Compromise</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Value</th>
+                        <th>Severity</th>
+                        <th>Source</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ioc in iocs %}
+                    <tr>
+                        <td><span class="badge">{{ ioc.ioc_type }}</span></td>
+                        <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ ioc.value|truncatechars:50 }}
+                        </td>
+                        <td>
+                            <span class="severity sev-{{ ioc.severity }}">{{ ioc.severity|title }}</span>
+                        </td>
+                        <td>{{ ioc.source|default:"Manual" }}</td>
+                        <td class="muted small">{{ ioc.created|date:"M d, Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="center muted" style="padding: 32px;">No IOCs found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Threat Feeds -->
+    <div class="card full-width">
+        <h3>Threat Feeds</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+            {% for feed in threat_feeds %}
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 6px;">
+                <div>
+                    <div style="font-weight: 500;">{{ feed.name }}</div>
+                    <div class="muted small">{{ feed.feed_type }} · {{ feed.ioc_count }} IOCs</div>
+                </div>
+                <span class="badge {% if feed.is_active %}event-other{% endif %}">{% if feed.is_active %}Active{% else
+                    %}Inactive{% endif %}</span>
+            </div>
+            {% empty %}
+            <div class="muted center" style="padding: 32px;">No threat feeds configured</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

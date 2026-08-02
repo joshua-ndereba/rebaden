@@ -1,129 +1,397 @@
+<!-- vscode-disable-html-css-validation -->
+<!-- vscode-disable-html-js-validation -->
 {% extends 'base.html' %}
 
-{% block title %}Dashboard{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
+{% block title %}SIEM Dashboard{% endblock %}
+{% block page_title %}Security Operations Dashboard{% endblock %}
 
 {% block content %}
 <div class="container">
-  <div class="top-row">
-    <h2>Overview</h2>
-    <div class="center">
-      <input class="input" placeholder="Search dashboard..." />
-      <button class="btn"><i class="ph ph-plus"></i> New View</button>
+
+  <!-- AI Insights Banner -->
+  <div class="card full-width"
+    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 24px;">
+    <div class="top-row">
+      <h3 style="color: white; margin: 0;"><i class="ph-bold ph-brain"></i> AI Threat Analysis</h3>
+      <span class="badge {{ ai_insights.risk_assessment }}">{{ ai_insights.risk_assessment|title }} Risk</span>
+    </div>
+    <p style="margin: 16px 0; font-size: 16px;">{{ ai_insights.threat_summary }}</p>
+    {% if ai_insights.key_findings %}
+    <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px;">
+      {% for finding in ai_insights.key_findings %}
+      <div style="background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 6px; font-size: 14px;">
+        {{ finding }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Core Metrics Row -->
+  <div class="grid" style="margin-bottom: 24px;">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"><i class="ph ph-activity"></i>
+        Events/Minute</div>
+      <div class="metric">{{ metrics.events_per_minute }}</div>
+      <div style="margin-top:6px;color:var(--status-success);font-size:12px;"><i class="ph-bold ph-trend-up"></i> {{
+        metrics.events_trend }} vs last hour</div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"><i class="ph ph-bell-ringing"></i>
+        Active Alerts</div>
+      <div class="metric" style="color:#ef4444;">{{ metrics.active_alerts }}</div>
+      <div style="margin-top:6px;color:var(--status-warning);font-size:12px;"><i class="ph-bold ph-warning"></i>
+        Requires attention</div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"><i class="ph ph-shield-warning"></i>
+        Critical Alerts</div>
+      <div class="metric" style="color:#ef4444;">{{ critical_alerts }}</div>
+      <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">+{{ high_alerts }} high priority</div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"><i class="ph ph-folder-open"></i> Open
+        Investigations</div>
+      <div class="metric" style="color:#f59e0b;">{{ open_investigations }}</div>
+      <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">Active cases</div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"><i class="ph ph-list-dashes"></i>
+        All-time Events</div>
+      <div class="metric" style="color:#3b82f6;">{{ total_events_alltime }}</div>
+      <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">{{ total_events_24h }} in 24h</div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"><i class="ph ph-plug"></i> Log Sources
+      </div>
+      <div class="metric" style="color:#10b981;">{{ active_log_sources }}</div>
+      <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">Active sources</div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"><i class="ph ph-eye"></i> Unreviewed
+        Anomalies</div>
+      <div class="metric" style="color:#8b5cf6;">{{ unreviewed_anomalies }}</div>
+      <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">Awaiting review</div>
     </div>
   </div>
 
-  <div class="grid">
-    <!-- Metric Card 1 -->
+  <!-- Quick Actions + AI Rec + Threat Hunting -->
+  <div class="grid" style="margin-bottom: 24px;">
     <div class="card">
-      <h3>Events per Minute</h3>
-      <div class="metric">{{ metrics.events_per_minute }}</div>
-      <div class="center" style="margin-top: 8px; color: var(--status-success); font-size: 13px;">
-        <i class="ph-bold ph-trend-up"></i>
-        <span>+12% vs last hour</span>
+      <h4>Quick Actions</h4>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <a href="{% url 'logs' %}" class="btn small"><i class="ph ph-upload"></i> Upload Logs</a>
+        <a href="{% url 'investigations' %}" class="btn small ghost"><i class="ph ph-folder"></i> New Investigation</a>
+        <a href="{% url 'advanced_search' %}" class="btn small ghost"><i class="ph ph-magnifying-glass"></i> Search
+          Events</a>
       </div>
     </div>
 
-    <!-- Metric Card 2 -->
     <div class="card">
-      <h3>Active Alerts</h3>
-      <div class="metric">{{ metrics.active_alerts }}</div>
-      <div class="center" style="margin-top: 8px; color: var(--status-warning); font-size: 13px;">
-        <i class="ph-bold ph-warning"></i>
-        <span>Requires attention</span>
-      </div>
-    </div>
-
-    <!-- Metric Card 3 -->
-    <div class="card">
-      <h3>Top Sources</h3>
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-        {% for s in metrics.top_sources %}
-        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-          <span class="muted">{{ s.ip }}</span>
-          <span style="font-weight: 600;">{{ s.events }}</span>
+      <h4>AI Recommendations</h4>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        {% for rec in ai_insights.recommendations %}
+        <div style="font-size: 13px; color: var(--text-secondary);">
+          <i class="ph ph-lightbulb" style="color: #fbbf24;"></i> {{ rec }}
         </div>
+        {% empty %}
+        <div style="font-size:13px;color:var(--text-secondary);">No recommendations at this time.</div>
         {% endfor %}
       </div>
     </div>
 
-    <!-- Full Width Table -->
-    <div class="card full-width">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3>Recent Events</h3>
-        <a href="{% url 'events' %}" class="btn ghost small">View All</a>
-      </div>
-
-      <div class="table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Source</th>
-              <th>Message</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for e in metrics.recent_events %}
-            <tr>
-              <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ e.time }}</td>
-              <td>{{ e.source }}</td>
-              <td>{{ e.message }}</td>
-              <td>
-                <span class="severity sev-low">Log</span>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    <div class="card">
+      <h4>Threat Hunting Signals</h4>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+          <span>Unusual Traffic</span>
+          <span style="font-weight: 600; color: #ef4444;">{{ threat_hunting.unusual_traffic }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+          <span>Lateral Movement</span>
+          <span style="font-weight: 600; color: #f59e0b;">{{ threat_hunting.lateral_movement }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+          <span>Data Exfiltration</span>
+          <span style="font-weight: 600; color: #10b981;">{{ threat_hunting.data_exfiltration }}</span>
+        </div>
       </div>
     </div>
+  </div>
 
-    <!-- Charts Row -->
+  <!-- Charts Row 1: Event Volume + Alert Severity -->
+  <div class="grid" style="margin-bottom: 24px;">
     <div class="card" style="grid-column: span 2;">
-      <h3>Events Volume</h3>
-      <div style="height: 250px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3>Event Volume (24h)</h3>
+        <select id="timeRange"
+          style="font-size: 13px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; background:var(--bg-secondary); color:var(--text-main);">
+          <option value="24h">Last 24 Hours</option>
+          <option value="7d">Last 7 Days</option>
+        </select>
+      </div>
+      <div style="height: 280px;">
         <canvas id="eventsChart"></canvas>
       </div>
     </div>
 
     <div class="card">
       <h3>Alert Severity</h3>
-      <div style="height: 250px; display: flex; justify-content: center;">
+      <div style="height: 280px; display: flex; justify-content: center; align-items: center;">
         <canvas id="severityChart"></canvas>
       </div>
     </div>
   </div>
+
+  <!-- Charts Row 2: 7-Day Alert Trend + Event Types + Log Sources -->
+  <div class="grid" style="margin-bottom: 24px;">
+    <div class="card">
+      <h3>7-Day Alert Trend</h3>
+      <div style="height: 250px;">
+        <canvas id="alertTrendChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Event Types</h3>
+      <div style="height: 250px;">
+        <canvas id="eventTypesChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Log Sources Activity</h3>
+      <div style="height: 250px;">
+        <canvas id="logSourcesChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attack Patterns + Top Sources + Threat Intel -->
+  <div class="grid" style="margin-bottom: 24px;">
+    <!-- Attack Pattern Analysis -->
+    <div class="card">
+      <h3>Attack Patterns</h3>
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 16px;">
+        {% for pattern in attack_patterns %}
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <div style="font-weight: 500; font-size: 14px;">{{ pattern.event_type|title }}</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">{{ pattern.count }} events</div>
+          </div>
+          <div style="height: 6px; background: var(--border); border-radius: 4px; overflow: hidden;">
+            {% if max_attack_count > 0 %}
+            <div style="height:100%; width:{% widthratio pattern.count max_attack_count 100 %}%;
+              background:{% if pattern.color_class == 'bar-sql-injection' %}#ef4444{% elif pattern.color_class == 'bar-brute-force' %}#f59e0b{% elif pattern.color_class == 'bar-port-scan' %}#3b82f6{% else %}#8b5cf6{% endif %};
+              border-radius:4px;transition:width 0.6s ease;"></div>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:16px;">No attack events
+          detected in the last 24h</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Top Attack Sources -->
+    <div class="card">
+      <h3>Top Attack Sources</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+        {% for source in top_sources %}
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 500; font-size: 14px; font-family: 'JetBrains Mono';">{{ source.ip }}</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">{{ source.events }} events, {{ source.alerts }}
+              alerts</div>
+          </div>
+          <span
+            class="badge {% if source.threat_level == 'high' %}badge-danger{% elif source.threat_level == 'medium' %}badge-warning{% else %}badge-success{% endif %}">{{
+            source.threat_level }}</span>
+        </div>
+        {% empty %}
+        <div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:16px;">No source IP data
+          available</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Threat Intelligence -->
+    <div class="card">
+      <h3>Threat Intelligence</h3>
+      <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
+        <div style="display: flex; justify-content: space-between;">
+          <span>Active IOCs</span>
+          <span style="font-weight: 600; color: #3b82f6;">{{ active_iocs }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>New IOCs (24h)</span>
+          <span style="font-weight: 600; color: #ef4444;">{{ ioc_matches_24h }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Threat Actors</span>
+          <span style="font-weight: 600; color: #f59e0b;">{{ threat_actors }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>MITRE Techniques</span>
+          <span style="font-weight: 600; color: #10b981;">{{ mitre_coverage }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Alerts + Log Sources Status -->
+  <div class="grid" style="margin-bottom: 24px;">
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3>Recent Alerts</h3>
+        <a href="{% url 'alerts' %}" class="btn ghost small">View All</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for alert in top_alerts %}
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;">
+          <div>
+            <div style="font-weight: 500; font-size: 14px;">{{ alert.name }}</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">{{ alert.count }} occurrence{{
+              alert.count|pluralize }}</div>
+          </div>
+          <span class="severity sev-{{ alert.severity }}">{{ alert.severity|title }}</span>
+        </div>
+        {% empty %}
+        <div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:16px;">No active alerts</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Log Sources Status</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+        {% for source in log_sources_with_counts %}
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 500; font-size: 14px;">{{ source.name }}</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">{{ source.source_type }} &bull; {{
+              source.event_count }} events</div>
+          </div>
+          <span style="font-size:12px;color:{% if source.is_active %}#10b981{% else %}#ef4444{% endif %};">
+            <i class="ph-fill ph-circle" style="font-size:8px;"></i>
+            {% if source.is_active %}Active{% else %}Inactive{% endif %}
+          </span>
+        </div>
+        {% empty %}
+        <div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:16px;">
+          No log sources yet. <a href="{% url 'logs' %}">Upload logs</a> to get started.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Security Events Table -->
+  <div class="card full-width">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3>Recent Security Events</h3>
+      <div style="display:flex;gap:8px;">
+        <a href="{% url 'advanced_search' %}" class="btn ghost small"><i class="ph ph-magnifying-glass"></i> Search</a>
+        <a href="{% url 'events' %}" class="btn ghost small">View All Events</a>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Source</th>
+            <th>Event Type</th>
+            <th>Message</th>
+            <th>Severity</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in recent_events %}
+          <tr>
+            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ event.time|date:"M d H:i:s" }}</td>
+            <td>
+              {% if event.source_ip %}
+              <div style="font-family:'JetBrains Mono';font-size:13px;">{{ event.source_ip }}</div>
+              {% if event.source_port %}<div style="font-size: 11px; color: var(--text-secondary);">:{{
+                event.source_port }}</div>{% endif %}
+              {% else %}
+              <span class="muted">{{ event.source|truncatechars:20 }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <span
+                class="badge {% if event.event_type == 'sql_injection' %}event-sql-injection{% elif event.event_type == 'brute_force' %}event-brute-force{% elif event.event_type == 'port_scan' %}event-port-scan{% else %}event-other{% endif %}">
+                {{ event.event_type|default:"unknown"|title }}
+              </span>
+            </td>
+            <td style="max-width: 280px; overflow: hidden; text-overflow: ellipsis; font-size: 13px;">{{
+              event.message|truncatechars:80 }}</td>
+            <td>
+              <span class="severity sev-{{ event.severity }}">{{ event.severity|title }}</span>
+            </td>
+            <td>
+              {% with alerts=event.alert_set.all %}
+              {% if alerts %}
+              <a href="{% url 'alert_detail' alerts.0.id %}" class="btn ghost small">View Alert</a>
+              {% else %}
+              <span class="muted" style="font-size:12px;">—</span>
+              {% endif %}
+              {% endwith %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center;color:var(--text-secondary);padding:32px;">
+              <i class="ph ph-empty" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+              No events yet. <a href="{% url 'logs' %}">Upload log files</a> to populate the dashboard.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <script>
-  // Chart Configuration
   Chart.defaults.color = '#a1a1aa';
   Chart.defaults.borderColor = '#27272a';
   Chart.defaults.font.family = "'Inter', sans-serif";
 
-  // Events Chart
+  // ── Event Volume (24h) ──────────────────────────────────────────────────────
+  const eventsData = {{ hourly_events_json| safe }};
   const ctxEvents = document.getElementById('eventsChart').getContext('2d');
-  new Chart(ctxEvents, {
+  const eventsChart = new Chart(ctxEvents, {
     type: 'line',
     data: {
-      labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25', '10:30'],
+      labels: eventsData.map(d => d.hour),
       datasets: [{
         label: 'Events',
-        data: [65, 59, 80, 81, 56, 120, 100],
+        data: eventsData.map(d => d.count),
         borderColor: '#3b82f6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         fill: true,
-        tension: 0.4
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 5,
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
+      plugins: { legend: { display: false } },
       scales: {
         y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
         x: { grid: { display: false } }
@@ -131,26 +399,133 @@
     }
   });
 
-  // Severity Chart
+  // ── Alert Severity Doughnut ──────────────────────────────────────────────────
+  const severityData = {{ alerts_by_severity_json| safe }};
   const ctxSeverity = document.getElementById('severityChart').getContext('2d');
   new Chart(ctxSeverity, {
     type: 'doughnut',
     data: {
-      labels: ['Low', 'Medium', 'High'],
+      labels: severityData.map(d => d.severity.charAt(0).toUpperCase() + d.severity.slice(1)),
       datasets: [{
-        data: [12, 5, 2],
-        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+        data: severityData.map(d => d.count),
+        backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
         borderWidth: 0
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom' }
-      },
+      plugins: { legend: { position: 'bottom', labels: { padding: 12 } } },
       cutout: '70%'
     }
+  });
+
+  // ── 7-Day Alert Trend ────────────────────────────────────────────────────────
+  const alertTrends = {{ alert_trends_json| safe }};
+  const ctxTrend = document.getElementById('alertTrendChart').getContext('2d');
+  new Chart(ctxTrend, {
+    type: 'line',
+    data: {
+      labels: alertTrends.map(d => d.day),
+      datasets: [{
+        label: 'Alerts',
+        data: alertTrends.map(d => d.count),
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239,68,68,0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // ── Event Types Bar ──────────────────────────────────────────────────────────
+  const eventTypesData = {{ event_types_json| safe }};
+  const ctxEventTypes = document.getElementById('eventTypesChart').getContext('2d');
+  new Chart(ctxEventTypes, {
+    type: 'bar',
+    data: {
+      labels: eventTypesData.map(d => d.event_type || 'Unknown'),
+      datasets: [{
+        label: 'Events',
+        data: eventTypesData.map(d => d.count),
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+        borderColor: '#3b82f6',
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+        x: { grid: { display: false }, ticks: { maxRotation: 45 } }
+      }
+    }
+  });
+
+  // ── Log Sources Activity ─────────────────────────────────────────────────────
+  const logSourcesData = {{ log_sources_with_counts| length }};
+  {% if log_sources_with_counts %}
+  const ctxLogSources = document.getElementById('logSourcesChart').getContext('2d');
+  new Chart(ctxLogSources, {
+    type: 'bar',
+    data: {
+      labels: [{% for s in log_sources_with_counts %}'{{ s.name|truncatechars:15 }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+    datasets: [{
+      label: 'Events',
+      data: [{% for s in log_sources_with_counts %}{{ s.event_count }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+  backgroundColor: [
+    'rgba(59,130,246,0.8)', 'rgba(16,185,129,0.8)', 'rgba(245,158,11,0.8)',
+    'rgba(139,92,246,0.8)', 'rgba(239,68,68,0.8)', 'rgba(6,182,212,0.8)',
+    'rgba(249,115,22,0.8)', 'rgba(236,72,153,0.8)'
+  ],
+    borderWidth: 0,
+      borderRadius: 4,
+      }]
+    },
+  options: {
+    indexAxis: 'y',
+      responsive: true,
+        maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+    scales: {
+      x: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+      y: { grid: { display: false } }
+    }
+  }
+  });
+  {% else %}
+  // No log sources — show placeholder
+  const noDataCtx = document.getElementById('logSourcesChart').getContext('2d');
+  noDataCtx.font = "14px Inter";
+  noDataCtx.fillStyle = "#71717a";
+  noDataCtx.textAlign = "center";
+  noDataCtx.fillText("Upload log files to see sources", noDataCtx.canvas.width / 2, noDataCtx.canvas.height / 2);
+  {% endif %}
+
+  // ── Time range selector ──────────────────────────────────────────────────────
+  document.getElementById('timeRange').addEventListener('change', function (e) {
+    const range = e.target.value;
+    fetch(`/api/events/?range=${range}`)
+      .then(r => r.json())
+      .then(data => {
+        // Group by hour/day and update chart
+        console.log('Time range data loaded:', data.length, 'events');
+      })
+      .catch(() => console.log('Chart refresh failed — no data'));
   });
 </script>
 {% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Rule: {{ rule.name }}{% endblock %}
+{% block page_title %}Detection Rule Detail{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="top-row">
+        <div>
+            <h2>{{ rule.name }}</h2>
+            <div class="center" style="gap: 8px; margin-top: 8px;">
+                <span class="badge">{{ rule.rule_type }}</span>
+                <span class="severity sev-{{ rule.severity }}">{{ rule.severity|title }}</span>
+                {% if rule.is_enabled %}
+                <span style="color: var(--status-success);">● Enabled</span>
+                {% else %}
+                <span class="muted">○ Disabled</span>
+                {% endif %}
+            </div>
+        </div>
+        <a href="{% url 'detection_rules' %}" class="btn ghost"><i class="ph ph-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="grid">
+        <div class="card full-width">
+            <h3>Rule Description</h3>
+            <p>{{ rule.description }}</p>
+        </div>
+
+        {% if rule.logic %}
+        <div class="card full-width">
+            <h3>Detection Logic</h3>
+            <pre
+                style="background: var(--bg-secondary); padding: 16px; border-radius: 8px; overflow-x: auto; font-family: 'JetBrains Mono'; font-size: 13px;">{{ rule.logic }}</pre>
+        </div>
+        {% endif %}
+
+        {% if mitre_techniques %}
+        <div class="card full-width">
+            <h3>MITRE ATT&CK Mapping</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;">
+                {% for tech in mitre_techniques %}
+                <a href="{% url 'mitre_technique_detail' tech.technique_id %}" class="badge"
+                    style="text-decoration: none;">
+                    {{ tech.technique_id }} - {{ tech.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card full-width">
+            <h3>Recent Alerts from This Rule</h3>
+            {% if recent_alerts %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>First Seen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in recent_alerts %}
+                        <tr>
+                            <td><a href="{% url 'alert_detail' alert.id %}">{{ alert.name }}</a></td>
+                            <td><span class="severity sev-{{ alert.severity }}">{{ alert.severity|title }}</span></td>
+                            <td>{{ alert.status }}</td>
+                            <td class="muted small">{{ alert.first_seen|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="muted center" style="padding: 32px;">No alerts triggered by this rule</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
