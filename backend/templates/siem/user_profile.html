@@ -18,10 +18,10 @@
                 <input type="hidden" name="update_profile" value="1">
                 {% for field in profile_form %}
                 <div>
-                    <label style="font-weight: 500; font-size: 14px; display: block; margin-bottom: 6px;">{{ field.label
-                        }}</label>
+                    <label style="font-weight: 500; font-size: 14px; display: block; margin-bottom: 6px;">{{ field.label }}</label>
                     <input class="input" type="{{ field.field.widget.input_type|default:'text' }}"
-                        name="{{ field.name }}" value="{{ field.value|default:'' }}" style="width: 100%;">
+                        name="{{ field.name }}" value="{{ field.value|default:'' }}" placeholder="{{ field.label }}"
+                        style="width: 100%;">
                 </div>
                 {% endfor %}
                 <button class="btn" type="submit" style="align-self: flex-start;">Save Changes</button>
@@ -36,9 +36,9 @@
                 <input type="hidden" name="change_password" value="1">
                 {% for field in password_form %}
                 <div>
-                    <label style="font-weight: 500; font-size: 14px; display: block; margin-bottom: 6px;">{{ field.label
-                        }}</label>
-                    <input class="input" type="password" name="{{ field.name }}" style="width: 100%;">
+                    <label style="font-weight: 500; font-size: 14px; display: block; margin-bottom: 6px;">{{ field.label }}</label>
+                    <input class="input" type="password" name="{{ field.name }}" placeholder="{{ field.label }}"
+                        style="width: 100%;">
                 </div>
                 {% endfor %}
                 <button class="btn" type="submit" style="align-self: flex-start;">Update Password</button>

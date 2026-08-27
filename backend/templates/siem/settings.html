@@ -21,23 +21,25 @@
       <h3>Profile Settings</h3>
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
-          <div class="avatar" style="width: 64px; height: 64px; font-size: 24px; background: var(--accent-primary); color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%;" id="profile-avatar">{{ request.user.first_name|first|upper }}</div>
+          <div class="avatar"
+            style="width: 64px; height: 64px; font-size: 24px; background: var(--accent-primary); color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%;"
+            id="profile-avatar">{{ request.user.first_name|first|upper }}</div>
           <div>
             <p id="profile-username" style="margin: 0; font-weight: 600;">{{ request.user.username }}</p>
             <p id="profile-role" style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-muted);"></p>
           </div>
         </div>
-        
+
         <div>
           <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">First Name</label>
           <input class="input" type="text" id="first-name" value="{{ request.user.first_name }}" style="width: 100%;">
         </div>
-        
+
         <div>
           <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Last Name</label>
           <input class="input" type="text" id="last-name" value="{{ request.user.last_name }}" style="width: 100%;">
         </div>
-        
+
         <div>
           <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Email Address</label>
           <input class="input" type="email" id="email" value="{{ request.user.email }}" style="width: 100%;">
@@ -50,13 +52,9 @@
 
         <div>
           <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Role</label>
-          <select class="input" id="role" style="width: 100%;">
-            <option value="analyst">Security Analyst</option>
-            <option value="investigator">Investigator</option>
-            <option value="manager">Manager</option>
-            <option value="admin">Administrator</option>
-            <option value="viewer">Viewer</option>
-          </select>
+          <input class="input" type="text" id="role" value="{{ request.user.profile.role|default:'analyst' }}"
+            style="width: 100%; text-transform: capitalize;" disabled>
+          <div class="small muted" style="margin-top: 4px;">Contact an administrator to change your privileges.</div>
         </div>
       </div>
     </div>
@@ -65,7 +63,8 @@
     <div class="card">
       <h3>Preferences</h3>
       <div style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+        <div
+          style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
           <div>
             <div style="font-weight: 600;">Dark Mode</div>
             <div class="small muted">Toggle application theme</div>
@@ -91,7 +90,8 @@
           </select>
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+        <div
+          style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
           <div>
             <div style="font-weight: 600;">Notifications</div>
             <div class="small muted">Enable desktop alerts</div>
@@ -102,7 +102,8 @@
           </label>
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+        <div
+          style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
           <div>
             <div style="font-weight: 600;">Email Alerts</div>
             <div class="small muted">Send alerts via email</div>
@@ -143,12 +144,14 @@
               <option value="firewall">Firewall</option>
               <option value="auth">Authentication</option>
             </select>
-            <input type="text" id="source-name" class="input" placeholder="Source Name (optional)" style="width: 100%; margin-bottom: 8px;">
+            <input type="text" id="source-name" class="input" placeholder="Source Name (optional)"
+              style="width: 100%; margin-bottom: 8px;">
             <button type="submit" class="btn" style="width: 100%;">Upload & Process</button>
           </form>
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+        <div
+          style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
           <div>
             <div style="font-weight: 600;">Syslog Listener</div>
             <div class="small muted">Port 514 (UDP)</div>
@@ -156,7 +159,8 @@
           <div style="color: var(--status-success); font-weight: 600;">Active</div>
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
+        <div
+          style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-app); border-radius: 8px;">
           <div>
             <div style="font-weight: 600;">API Collector</div>
             <div class="small muted">/api/v1/log-upload/</div>
@@ -171,7 +175,8 @@
       <h3>System Configuration</h3>
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div>
-          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">SIEM Instance Name</label>
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">SIEM Instance
+            Name</label>
           <input class="input" type="text" id="instance-name" value="REBADEN SIEM" style="width: 100%;">
         </div>
 
@@ -272,11 +277,11 @@
           'X-CSRFToken': getCookie('csrftoken'),
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         const profile = data.profile;
-        
+
         // Update form fields
         document.getElementById('role').value = profile.role || 'analyst';
         document.getElementById('department').value = profile.department || '';
@@ -284,7 +289,7 @@
         document.getElementById('notifications-enabled').checked = profile.notifications_enabled !== false;
         document.getElementById('email-alerts').checked = profile.email_alerts !== false;
         document.getElementById('alert-threshold').value = profile.alert_severity_threshold || 'medium';
-        
+
         // Update profile display
         document.getElementById('profile-role').textContent = profile.role || 'Analyst';
       }
@@ -323,7 +328,7 @@
       if (response.ok) {
         showAlert('Settings saved successfully!', 'success');
         btn.innerHTML = '<i class="ph ph-check"></i> Saved';
-        
+
         setTimeout(() => {
           btn.innerHTML = originalHtml;
           btn.disabled = false;
@@ -344,7 +349,7 @@
   // Handle log file upload
   document.getElementById('log-upload-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const file = document.getElementById('log-file').files[0];
     if (!file) {
       showAlert('Please select a file', 'error');
@@ -387,7 +392,7 @@
           'X-CSRFToken': getCookie('csrftoken'),
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         const statsHtml = `
@@ -410,7 +415,7 @@
           'X-CSRFToken': getCookie('csrftoken'),
         },
       });
-      
+
       if (response.ok) {
         document.getElementById('api-status-content').innerHTML = '<span style="color: var(--status-success);">✓ API is operational</span>';
       } else {
@@ -446,7 +451,7 @@
   function showAlert(message, type = 'info') {
     const container = document.getElementById('alert-container');
     const alertId = 'alert-' + Date.now();
-    
+
     const colors = {
       'success': 'background: var(--status-success); color: white;',
       'error': 'background: var(--status-error); color: white;',
@@ -469,9 +474,9 @@
       <span>${message}</span>
       <button onclick="document.getElementById('${alertId}').remove();" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">×</button>
     `;
-    
+
     container.appendChild(alert);
-    
+
     setTimeout(() => {
       const el = document.getElementById(alertId);
       if (el) el.remove();

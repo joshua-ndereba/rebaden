@@ -20,10 +20,10 @@
                 <select name="time_range"
                     style="padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text-main);font-size:14px;">
                     <option value="">All Time</option>
-                    <option value="1h" {% if request.GET.time_range=='1h' %}selected{% endif %}>Last Hour</option>
-                    <option value="24h" {% if request.GET.time_range=='24h' %}selected{% endif %}>Last 24 Hours</option>
-                    <option value="7d" {% if request.GET.time_range=='7d' %}selected{% endif %}>Last 7 Days</option>
-                    <option value="30d" {% if request.GET.time_range=='30d' %}selected{% endif %}>Last 30 Days</option>
+                    <option value="1h" {% if request.GET.time_range == '1h' %}selected{% endif %}>Last Hour</option>
+                    <option value="24h" {% if request.GET.time_range == '24h' %}selected{% endif %}>Last 24 Hours</option>
+                    <option value="7d" {% if request.GET.time_range == '7d' %}selected{% endif %}>Last 7 Days</option>
+                    <option value="30d" {% if request.GET.time_range == '30d' %}selected{% endif %}>Last 30 Days</option>
                 </select>
                 <button class="btn" type="submit" id="search-btn">
                     <i class="ph ph-magnifying-glass"></i> Search

@@ -8,8 +8,7 @@
     <div class="top-row">
         <div>
             <h2>{{ anomaly.anomaly_type|title }} Anomaly</h2>
-            <span class="severity sev-{{ anomaly.severity }}" style="margin-top: 8px;">{{ anomaly.severity|title
-                }}</span>
+            <span class="severity sev-{{ anomaly.severity }}" style="margin-top: 8px;">{{ anomaly.severity|title }}</span>
         </div>
         <div class="center">
             <form method="post" style="display: inline;">
@@ -68,8 +67,7 @@
                     <tbody>
                         {% for event in related_events %}
                         <tr>
-                            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ event.time|date:"Y-m-d H:i:s"
-                                }}</td>
+                            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ event.time|date:"Y-m-d H:i:s" }}</td>
                             <td>{{ event.source }}</td>
                             <td>{{ event.message|truncatewords:15 }}</td>
                             <td><span class="severity sev-{{ event.severity }}">{{ event.severity }}</span></td>

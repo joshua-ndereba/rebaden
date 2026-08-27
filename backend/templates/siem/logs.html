@@ -46,7 +46,7 @@
     </div>
     {% endif %}
 
-    <div class="grid" style="grid-template-columns: 1fr 2fr; align-items: start;">
+    <div class="grid" style="grid-template-columns: 1fr; max-width: 900px; margin: 0 auto; align-items: start;">
         <!-- Left: Upload & File List -->
         <div style="display: flex; flex-direction: column; gap: 16px;">
             <div class="card">
@@ -99,119 +99,130 @@
                 <h3 style="margin-bottom: 12px;">Selected Files</h3>
                 <div id="file-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
             </div>
-        </div>
 
-        <!-- Right: JSON/Text Viewer -->
-        <div class="card" style="min-height: 520px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 id="viewer-title">File Viewer</h3>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <span id="viewer-badge" class="small muted" style="display:none;"></span>
-                    <button class="btn ghost small" id="copy-btn" style="display:none;" onclick="copyContent()">
-                        <i class="ph ph-copy"></i> Copy
-                    </button>
+            <!-- Imported Log Sources from DB -->
+            {% if log_sources %}
+            <div class="card">
+                <h3 style="margin-bottom: 12px;">Imported Log Sources</h3>
+                <p class="muted small" style="margin-bottom: 12px;">Click "Re-process" to re-run threat detection on an
+                    already-imported file.</p>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    {% for src in log_sources %}
+                    <div
+                        style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-app);">
+                        <i class="ph ph-database"
+                            style="font-size: 18px; color: var(--accent-primary); flex-shrink: 0;"></i>
+                        <div style="flex: 1; min-width: 0;">
+                            <div
+                                style="font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ src.name }}</div>
+                            <div class="small muted">
+                                {{ src.events_received }} events &bull; {{ src.source_type }}
+                                {% if src.last_event_time %}&bull; {{ src.last_event_time|date:"M d H:i" }}{% endif %}
+                            </div>
+                        </div>
+                        <form method="post" style="flex-shrink: 0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reprocess">
+                            <input type="hidden" name="source_id" value="{{ src.id }}">
+                            <button type="submit" class="btn ghost small"
+                                title="Re-run threat detection on this source">
+                                <i class="ph ph-arrows-clockwise"></i> Re-process
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
+            {% endif %}
+        </div>
 
-            <div id="viewer-empty"
-                style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: var(--text-muted);">
-                <i class="ph ph-file-text" style="font-size: 48px; margin-bottom: 12px; opacity: 0.4;"></i>
-                <div style="font-weight: 500;">No file selected</div>
-                <div class="small" style="margin-top: 4px;">Select log files on the left to preview them here</div>
+        <!-- Recent Imported Events -->
+        <div class="card full-width" style="margin-top: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3>Recently Imported Events</h3>
+                <a href="{% url 'events' %}" class="btn ghost small">View All Events</a>
             </div>
-
-            <pre id="viewer-content"
-                style="display: none; background: var(--bg-app); border-radius: 6px; padding: 16px; overflow: auto; max-height: 480px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; color: var(--text-primary); margin: 0;"></pre>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source</th>
+                            <th>Type</th>
+                            <th>Severity</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td style="font-family: 'JetBrains Mono'; font-size: 12px; white-space: nowrap;">{{ log.time|date:"M d H:i:s" }}</td>
+                            <td>{{ log.source|default:"—" }}</td>
+                            <td><span class="severity sev-low">{{ log.category|default:"system" }}</span></td>
+                            <td>
+                                <span class="severity sev-{{ log.severity }}">{{ log.severity|title }}</span>
+                            </td>
+                            <td
+                                style="font-family: 'JetBrains Mono'; font-size: 12px; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {{ log.message|truncatechars:100 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="center" style="padding: 32px; color: var(--text-muted);">
+                                <i class="ph ph-database"
+                                    style="font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.4;"></i>
+                                No events yet — upload log files to get started.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- Recent Imported Events -->
-    <div class="card full-width" style="margin-top: 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3>Recently Imported Events</h3>
-            <a href="{% url 'events' %}" class="btn ghost small">View All Events</a>
-        </div>
-        <div class="table-container">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Source</th>
-                        <th>Type</th>
-                        <th>Severity</th>
-                        <th>Message</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td style="font-family: 'JetBrains Mono'; font-size: 12px; white-space: nowrap;">{{
-                            log.time|date:"M d H:i:s" }}</td>
-                        <td>{{ log.source|default:"—" }}</td>
-                        <td><span class="severity sev-low">{{ log.category|default:"system" }}</span></td>
-                        <td>
-                            <span class="severity sev-{{ log.severity }}">{{ log.severity|title }}</span>
-                        </td>
-                        <td
-                            style="font-family: 'JetBrains Mono'; font-size: 12px; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            {{ log.message|truncatechars:100 }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="center" style="padding: 32px; color: var(--text-muted);">
-                            <i class="ph ph-database"
-                                style="font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.4;"></i>
-                            No events yet — upload log files to get started.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+    <script>
+        // --- Drop Zone ---
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
 
-<script>
-    // --- Drop Zone ---
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--accent-primary)';
+            dropZone.style.background = 'var(--bg-hover)';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = 'var(--border-subtle)';
+            dropZone.style.background = 'transparent';
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--border-subtle)';
+            dropZone.style.background = 'transparent';
+            const dt = new DataTransfer();
+            for (const f of e.dataTransfer.files) dt.items.add(f);
+            fileInput.files = dt.files;
+            renderFileList(fileInput.files);
+        });
 
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = 'var(--accent-primary)';
-        dropZone.style.background = 'var(--bg-hover)';
-    });
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.style.borderColor = 'var(--border-subtle)';
-        dropZone.style.background = 'transparent';
-    });
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = 'var(--border-subtle)';
-        dropZone.style.background = 'transparent';
-        const dt = new DataTransfer();
-        for (const f of e.dataTransfer.files) dt.items.add(f);
-        fileInput.files = dt.files;
-        renderFileList(fileInput.files);
-    });
+        fileInput.addEventListener('change', () => renderFileList(fileInput.files));
 
-    fileInput.addEventListener('change', () => renderFileList(fileInput.files));
+        // Store file contents keyed by name
+        const fileContents = {};
 
-    // Store file contents keyed by name
-    const fileContents = {};
+        function renderFileList(files) {
+            const card = document.getElementById('file-list-card');
+            const list = document.getElementById('file-list');
+            if (!files.length) { card.style.display = 'none'; return; }
+            card.style.display = 'block';
+            list.innerHTML = '';
 
-    function renderFileList(files) {
-        const card = document.getElementById('file-list-card');
-        const list = document.getElementById('file-list');
-        if (!files.length) { card.style.display = 'none'; return; }
-        card.style.display = 'block';
-        list.innerHTML = '';
-
-        Array.from(files).forEach((file, idx) => {
-            const item = document.createElement('div');
-            item.id = `file-item-${idx}`;
-            item.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:6px; cursor:pointer; border: 1px solid var(--border); transition: background 0.15s;';
-            item.innerHTML = `
+            Array.from(files).forEach((file, idx) => {
+                const item = document.createElement('div');
+                item.id = `file-item-${idx}`;
+                item.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:6px; cursor:default; border: 1px solid var(--border); transition: background 0.15s;';
+                item.innerHTML = `
                 <i class="ph ph-file-text" style="font-size:18px; color: var(--accent-primary); flex-shrink:0;"></i>
                 <div style="flex:1; overflow:hidden;">
                     <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${file.name}</div>
@@ -219,77 +230,21 @@
                 </div>
                 <span class="severity sev-low" id="status-${idx}" style="font-size:11px;">Queued</span>
             `;
-            item.addEventListener('click', () => showFileInViewer(file, idx));
-            item.addEventListener('mouseenter', () => item.style.background = 'var(--bg-hover)');
-            item.addEventListener('mouseleave', () => item.style.background = 'transparent');
-            list.appendChild(item);
-
-            // Read file content for viewer
-            const reader = new FileReader();
-            reader.onload = (e) => { fileContents[file.name] = e.target.result; };
-            reader.readAsText(file);
-        });
-    }
-
-    function showFileInViewer(file, idx) {
-        const title = document.getElementById('viewer-title');
-        const empty = document.getElementById('viewer-empty');
-        const content = document.getElementById('viewer-content');
-        const badge = document.getElementById('viewer-badge');
-        const copyBtn = document.getElementById('copy-btn');
-
-        title.textContent = file.name;
-        empty.style.display = 'none';
-        content.style.display = 'block';
-        copyBtn.style.display = 'inline-flex';
-        badge.style.display = 'inline';
-        badge.textContent = formatBytes(file.size);
-        content.textContent = 'Loading...';
-
-        // Highlight selected row
-        document.querySelectorAll('[id^="file-item-"]').forEach(el => el.style.borderColor = 'var(--border)');
-        const selected = document.getElementById(`file-item-${idx}`);
-        if (selected) selected.style.borderColor = 'var(--accent-primary)';
-
-        const raw = fileContents[file.name];
-        if (!raw) {
-            // Wait a tick for FileReader
-            setTimeout(() => showFileInViewer(file, idx), 150);
-            return;
+                list.appendChild(item);
+            });
         }
 
-        // Try JSON formatting
-        try {
-            const parsed = JSON.parse(raw);
-            content.textContent = JSON.stringify(parsed, null, 2);
-        } catch {
-            // Plain text — show as-is (up to first 2000 lines for perf)
-            const lines = raw.split('\n');
-            const preview = lines.slice(0, 2000).join('\n');
-            content.textContent = preview + (lines.length > 2000 ? `\n\n... (${lines.length - 2000} more lines)` : '');
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
         }
-    }
 
-    function copyContent() {
-        const text = document.getElementById('viewer-content').textContent;
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = document.getElementById('copy-btn');
-            btn.innerHTML = '<i class="ph ph-check"></i> Copied';
-            setTimeout(() => btn.innerHTML = '<i class="ph ph-copy"></i> Copy', 2000);
+        // Show loading state on submit
+        document.getElementById('log-upload-form').addEventListener('submit', () => {
+            const btn = document.getElementById('submit-btn');
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Processing...';
+            btn.disabled = true;
         });
-    }
-
-    function formatBytes(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / 1048576).toFixed(1) + ' MB';
-    }
-
-    // Show loading state on submit
-    document.getElementById('log-upload-form').addEventListener('submit', () => {
-        const btn = document.getElementById('submit-btn');
-        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Processing...';
-        btn.disabled = true;
-    });
-</script>
-{% endblock %}
+    </script>
+    {% endblock %}

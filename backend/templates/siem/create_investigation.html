@@ -15,8 +15,7 @@
             {% csrf_token %}
             {% for field in form %}
             <div>
-                <label style="font-weight: 500; font-size: 14px; display: block; margin-bottom: 6px;">{{ field.label
-                    }}</label>
+                <label style="font-weight: 500; font-size: 14px; display: block; margin-bottom: 6px;">{{ field.label }}</label>
                 {{ field }}
                 {% if field.help_text %}
                 <div class="muted small" style="margin-top: 4px;">{{ field.help_text }}</div>

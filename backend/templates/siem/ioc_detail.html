@@ -62,8 +62,7 @@
                     <tbody>
                         {% for event in related_events %}
                         <tr>
-                            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ event.time|date:"Y-m-d H:i:s"
-                                }}</td>
+                            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ event.time|date:"Y-m-d H:i:s" }}</td>
                             <td>{{ event.source }}</td>
                             <td>{{ event.message|truncatewords:15 }}</td>
                             <td><span class="severity sev-{{ event.severity }}">{{ event.severity }}</span></td>

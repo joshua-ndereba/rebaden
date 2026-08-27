@@ -34,8 +34,7 @@
                     <div style="color:var(--text-secondary);font-size:14px;">{{ analyst.email }}</div>
                     <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
                         {% if profile %}
-                        <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;">{{
-                            profile.get_role_display }}</span>
+                        <span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;">{{ profile.get_role_display }}</span>
                         {% if profile.department %}<span class="badge">{{ profile.department }}</span>{% endif %}
                         {% endif %}
                         {% if analyst.is_superuser %}<span class="badge"
@@ -105,8 +104,7 @@
                     <select name="role"
                         style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text-main);font-size:14px;">
                         {% for value, label in role_choices %}
-                        <option value="{{ value }}" {% if profile and profile.role==value %}selected{% endif %}>{{ label
-                            }}</option>
+                        <option value="{{ value }}" {% if profile and profile.role==value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -136,8 +134,7 @@
     <!-- Recent Alerts -->
     <div class="card full-width" style="margin-bottom:16px;">
         <h3 style="margin-bottom:16px;"><i class="ph ph-bell"></i> Assigned Alerts <span
-                style="font-weight:400;font-size:14px;color:var(--text-secondary);">(recent {{ alerts_assigned|length
-                }})</span></h3>
+                style="font-weight:400;font-size:14px;color:var(--text-secondary);">(recent {{ alerts_assigned|length }})</span></h3>
         {% if alerts_assigned %}
         <div class="table-container">
             <table class="table">
@@ -173,8 +170,7 @@
     <!-- Recent Investigations -->
     <div class="card full-width" style="margin-bottom:16px;">
         <h3 style="margin-bottom:16px;"><i class="ph ph-folder-open"></i> Owned Investigations <span
-                style="font-weight:400;font-size:14px;color:var(--text-secondary);">(recent {{
-                investigations_owned|length }})</span></h3>
+                style="font-weight:400;font-size:14px;color:var(--text-secondary);">(recent {{ investigations_owned|length }})</span></h3>
         {% if investigations_owned %}
         <div class="table-container">
             <table class="table">
@@ -211,8 +207,7 @@
     <!-- Audit Log -->
     <div class="card full-width">
         <h3 style="margin-bottom:16px;"><i class="ph ph-clipboard-text"></i> Audit Log <span
-                style="font-weight:400;font-size:14px;color:var(--text-secondary);">(recent {{ audit_logs|length
-                }})</span></h3>
+                style="font-weight:400;font-size:14px;color:var(--text-secondary);">(recent {{ audit_logs|length }})</span></h3>
         {% if audit_logs %}
         <div class="table-container">
             <table class="table">
@@ -227,12 +222,10 @@
                 <tbody>
                     {% for log in audit_logs %}
                     <tr>
-                        <td style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-secondary);">{{
-                            log.timestamp|date:"M d H:i:s" }}</td>
+                        <td style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-secondary);">{{ log.timestamp|date:"M d H:i:s" }}</td>
                         <td><span class="badge">{{ log.action_type }}</span></td>
                         <td style="font-size:13px;">{{ log.resource_type }}</td>
-                        <td style="font-size:13px;max-width:320px;overflow:hidden;text-overflow:ellipsis;">{{
-                            log.description|truncatechars:80 }}</td>
+                        <td style="font-size:13px;max-width:320px;overflow:hidden;text-overflow:ellipsis;">{{ log.description|truncatechars:80 }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

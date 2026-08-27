@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -18,6 +18,14 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Apply saved theme immediately to prevent flash -->
+    <script>
+        (function () {
+            var t = localStorage.getItem('siem_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 
 <body>
@@ -78,20 +86,21 @@
                             <span>Logs</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{% url 'reports' %}"
+                            class="{% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
+                            title="Reports">
+                            <i class="ph ph-chart-bar"></i>
+                            <span>Reports</span>
+                        </a>
+                    </li>
 
                 </ul>
 
                 <div class="nav-divider"></div>
 
                 <ul>
-                    <li>
-                        <a href="{% url 'documentation_page' %}"
-                            class="{% if request.resolver_match.url_name == 'documentation_page' %}active{% endif %}"
-                            title="Documentation & Help">
-                            <i class="ph ph-question"></i>
-                            <span>Help / Docs</span>
-                        </a>
-                    </li>
+
                     <li>
                         <a href="{% url 'settings' %}"
                             class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}"
@@ -129,6 +138,16 @@
                         <span class="role">{% if request.user.is_superuser %}Admin{% else %}Analyst{% endif %}</span>
                     </div>
                 </div>
+                <div class="sidebar-footer-actions">
+                    <a href="{% url 'user_profile' %}" class="footer-action-btn" title="Profile">
+                        <i class="ph ph-user-circle"></i>
+                        <span>Profile</span>
+                    </a>
+                    <a href="{% url 'logout' %}" class="footer-action-btn logout-btn" title="Logout">
+                        <i class="ph ph-sign-out"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
             </div>
         </aside>
 
@@ -143,6 +162,7 @@
                     <span class="crumb-current">{% block page_title %}Dashboard{% endblock %}</span>
                 </div>
                 <div class="top-actions">
+                    <button id="theme-toggle" title="Toggle light/dark mode">🌙</button>
                     <button class="icon-btn" id="notif-btn" title="Notifications"><i class="ph ph-bell"></i></button>
                     <button class="icon-btn" id="help-btn" title="Help"><i class="ph ph-question"></i></button>
                 </div>
@@ -155,7 +175,26 @@
     </div>
 
     <script>
-        // ── Mobile sidebar toggle ──────────────────────────────
+        // ── Theme Toggle ───────────────────────────────────
+        const html = document.documentElement;
+        const themeBtn = document.getElementById('theme-toggle');
+        const THEME_KEY = 'siem_theme';
+
+        function applyTheme(theme) {
+            html.setAttribute('data-theme', theme);
+            themeBtn.textContent = theme === 'dark' ? '🌙' : '☀️';
+            localStorage.setItem(THEME_KEY, theme);
+        }
+
+        // Init from storage (already applied inline above to avoid flash)
+        applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
+        themeBtn.addEventListener('click', () => {
+            const current = html.getAttribute('data-theme');
+            applyTheme(current === 'dark' ? 'light' : 'dark');
+        });
+
+        // ── Mobile sidebar toggle ──────────────────────────
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('sidebar-toggle');
         const closeBtn = document.getElementById('sidebar-close');
@@ -163,7 +202,7 @@
         toggleBtn && toggleBtn.addEventListener('click', () => sidebar.classList.add('open'));
         closeBtn && closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
 
-        // ── Desktop sidebar collapse ───────────────────────────
+        // ── Desktop sidebar collapse ───────────────────────
         const collapseBtn = document.getElementById('sidebar-collapse-btn');
         const collapseIcon = document.getElementById('collapse-icon');
         const COLLAPSED_KEY = 'siem_sidebar_collapsed';
@@ -171,14 +210,16 @@
         function applySidebarState(collapsed) {
             if (collapsed) {
                 sidebar.classList.add('sidebar-collapsed');
-                collapseIcon.className = 'ph ph-sidebar-simple';
+                collapseIcon.className = 'ph ph-arrow-line-right';
+                collapseBtn.title = 'Expand sidebar';
             } else {
                 sidebar.classList.remove('sidebar-collapsed');
-                collapseIcon.className = 'ph ph-sidebar-simple';
+                collapseIcon.className = 'ph ph-arrow-line-left';
+                collapseBtn.title = 'Collapse sidebar';
             }
         }
 
-        // Restore saved state
+        // Restore saved state on load
         const savedCollapsed = localStorage.getItem(COLLAPSED_KEY) === 'true';
         applySidebarState(savedCollapsed);
 
@@ -189,12 +230,12 @@
             applySidebarState(newState);
         });
 
-        // ── Top bar buttons ────────────────────────────────────
+        // ── Top bar buttons ────────────────────────────────
         document.getElementById('notif-btn').addEventListener('click', () => {
             alert('No new notifications.');
         });
         document.getElementById('help-btn').addEventListener('click', () => {
-            alert('Help & Documentation:\n\n1. Use the sidebar to navigate.\n2. Dashboard shows overview metrics.\n3. Events/Alerts show security data.\n4. Hunting allows running queries.\n5. Settings allows configuration.\n\nTip: Click the sidebar icon (←) to collapse/expand the sidebar.');
+            alert('Help & Documentation:\n\n1. Use the sidebar to navigate.\n2. Dashboard shows overview metrics.\n3. Events/Alerts show security data.\n4. Investigations allow case management.\n5. Settings allows configuration.\n\nTip: Click the arrow icon to collapse/expand the sidebar. Use the 🌙/☀️ button to switch themes.');
         });
     </script>
 </body>

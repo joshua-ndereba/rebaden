@@ -6,95 +6,103 @@
 {% block content %}
 <div class="container">
     <div class="top-row">
-        <h2>Reports & Exports</h2>
-        <div class="center">
-            <button class="btn"><i class="ph ph-plus"></i> Generate New Report</button>
+        <div>
+            <h2>Investigation Reports</h2>
+            <p class="muted small" style="margin-top: 4px;">
+                {{ total_reports }} report{{ total_reports|pluralize }} total &bull;
+                {{ investigation_reports }} incident report{{ investigation_reports|pluralize }}
+            </p>
+        </div>
+        <div class="center" style="gap: 8px;">
+            <a href="{% url 'investigations' %}" class="btn ghost">
+                <i class="ph ph-magnifying-glass"></i> View Investigations
+            </a>
         </div>
     </div>
 
-    <div class="grid" style="grid-template-columns: 2fr 1fr;">
-        <div class="card">
-            <h3>Available Reports</h3>
-            <div class="table-container">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Report Name</th>
-                            <th>Generated Date</th>
-                            <th>Type</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for r in reports %}
-                        <tr>
-                            <td style="font-weight: 500;">{{ r.name }}</td>
-                            <td class="muted small">{{ r.generated_at }}</td>
-                            <td><span class="severity sev-low">{{ r.report_type }}</span></td>
-                            <td>
-                                <button class="btn ghost small"><i class="ph ph-download-simple"></i> Download</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    {% if messages %}
+    <div style="margin-bottom: 16px;">
+        {% for message in messages %}
+        <div
+            style="padding: 12px 16px; border-radius: 6px; margin-bottom: 8px;
+            {% if message.tags == 'success' %}background: rgba(16,185,129,0.15); border: 1px solid var(--status-success); color: var(--status-success);
+            {% else %}background: rgba(239,68,68,0.15); border: 1px solid var(--status-danger); color: var(--status-danger);{% endif %}">
+            <i class="ph {% if message.tags == 'success' %}ph-check-circle{% else %}ph-warning{% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if reports %}
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+        {% for r in reports %}
+        <div class="card" style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                        <i class="ph ph-file-text"
+                            style="font-size: 20px; color: var(--accent-primary); flex-shrink: 0;"></i>
+                        <span style="font-weight: 600; font-size: 15px;">{{ r.name }}</span>
+                    </div>
+
+                    {% if r.description %}
+                    <div id="desc-short-{{ r.id }}"
+                        style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px; line-height: 1.5; white-space: pre-line;">
+                        {{ r.description|truncatechars:350 }}</div>
+                    {% if r.description|length > 350 %}
+                    <div id="desc-full-{{ r.id }}"
+                        style="display:none; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; line-height: 1.6; white-space: pre-line; background: var(--bg-app); border-radius: 6px; padding: 12px;">
+                        {{ r.description }}</div>
+                    <button onclick="toggleDesc({{ r.id }})" id="toggle-btn-{{ r.id }}" class="btn ghost small"
+                        style="margin-bottom: 8px;">
+                        <i class="ph ph-caret-down"></i> Show full report
+                    </button>
+                    {% endif %}
+                    {% else %}
+                    <div class="muted small" style="margin-bottom: 8px;">No summary available.</div>
+                    {% endif %}
+
+                    <div class="muted small" style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <span><i class="ph ph-calendar"></i> {{ r.generated_at|date:"M d, Y H:i" }}</span>
+                        <span><i class="ph ph-file"></i> {{ r.format|upper }}</span>
+                    </div>
+                </div>
             </div>
         </div>
+        {% endfor %}
+    </div>
 
-        <div class="card">
-            <h3>Scheduled Reports</h3>
-            <div style="display: flex; flex-direction: column; gap: 16px;">
-                <div style="background: var(--bg-app); padding: 12px; border-radius: 8px;">
-                    <div style="font-weight: 600; margin-bottom: 4px;">Daily Executive Brief</div>
-                    <div class="muted small">Recipients: execs@company.com</div>
-                    <div class="muted small">Schedule: Daily at 08:00 AM</div>
-                </div>
-                <div style="background: var(--bg-app); padding: 12px; border-radius: 8px;">
-                    <div style="font-weight: 600; margin-bottom: 4px;">Monthly Compliance Audit</div>
-                    <div class="muted small">Recipients: compliance@company.com</div>
-                    <div class="muted small">Schedule: 1st of month</div>
-                </div>
-            </div>
+    {% else %}
+    <div class="card full-width" style="padding: 64px; text-align: center;">
+        <i class="ph ph-file-text"
+            style="font-size: 48px; color: var(--text-muted); opacity: 0.4; display: block; margin-bottom: 16px;"></i>
+        <h3 style="color: var(--text-muted); text-transform: none; font-size: 16px; margin-bottom: 8px;">No reports yet
+        </h3>
+        <p class="muted small" style="margin-bottom: 20px;">
+            Reports are automatically generated when you open an Investigation detail page, or you can generate one
+            manually.
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <a href="{% url 'investigations' %}" class="btn ghost">
+                <i class="ph ph-magnifying-glass"></i> Go to Investigations
+            </a>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <script>
-    const generateBtn = document.querySelector('.top-row .btn');
-    generateBtn.addEventListener('click', () => {
-        generateBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Generating...';
-        generateBtn.disabled = true;
-
-        setTimeout(() => {
-            generateBtn.innerHTML = '<i class="ph ph-plus"></i> Generate New Report';
-            generateBtn.disabled = false;
-
-            const tbody = document.querySelector('tbody');
-            const row = document.createElement('tr');
-            const date = new Date().toISOString().split('T')[0];
-            row.innerHTML = `
-                <td style="font-weight: 500;">Custom Security Report</td>
-                <td class="muted small">${date}</td>
-                <td><span class="severity sev-low">PDF</span></td>
-                <td>
-                    <button class="btn ghost small" onclick="downloadReport(this)"><i class="ph ph-download-simple"></i> Download</button>
-                </td>
-            `;
-            tbody.insertBefore(row, tbody.firstChild);
-        }, 2000);
-    });
-
-    const downloadBtns = document.querySelectorAll('.btn.ghost.small');
-    downloadBtns.forEach(btn => {
-        btn.setAttribute('onclick', 'downloadReport(this)');
-    });
-
-    function downloadReport(btn) {
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="ph ph-check"></i> Saved';
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-        }, 2000);
+    function toggleDesc(id) {
+        const short = document.getElementById('desc-short-' + id);
+        const full = document.getElementById('desc-full-' + id);
+        const btn = document.getElementById('toggle-btn-' + id);
+        const isExpanded = full.style.display !== 'none';
+        short.style.display = isExpanded ? '' : 'none';
+        full.style.display = isExpanded ? 'none' : '';
+        btn.innerHTML = isExpanded
+            ? '<i class="ph ph-caret-down"></i> Show full report'
+            : '<i class="ph ph-caret-up"></i> Hide';
     }
 </script>
 {% endblock %}

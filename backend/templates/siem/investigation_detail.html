@@ -15,7 +15,16 @@
         </div>
         <div class="center">
             <button class="btn ghost"><i class="ph ph-share"></i> Share</button>
-            <button class="btn"><i class="ph ph-check"></i> Close Case</button>
+            {% if inv.status != 'closed' and inv.status != 'resolved' %}
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_status">
+                <input type="hidden" name="status" value="closed">
+                <button type="submit" class="btn"><i class="ph ph-check"></i> Close Case</button>
+            </form>
+            {% else %}
+            <button class="btn disabled" disabled><i class="ph ph-check"></i> Closed</button>
+            {% endif %}
         </div>
     </div>
 

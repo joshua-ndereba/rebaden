@@ -410,6 +410,50 @@ def logs_view(request):
     upload_stats = None
 
     if request.method == 'POST':
+        # Handle reprocessing an existing log source
+        if request.POST.get('action') == 'reprocess':
+            source_id = request.POST.get('source_id')
+            log_source = get_object_or_404(LogSource, pk=source_id)
+            events = list(log_source.event_set.all())
+            if not events:
+                messages.warning(request, f'No events found for "{log_source.name}".')
+            else:
+                # Build lightweight event-data dicts for ThreatDetector
+                event_data_list = [
+                    {
+                        'source_ip': e.source_ip,
+                        'message': e.message,
+                        'raw_log': e.raw_log,
+                        'event_type': e.event_type,
+                        'severity': e.severity,
+                    }
+                    for e in events
+                ]
+                threats = ThreatDetector.detect_threats(event_data_list)
+                alerts_created = 0
+                for threat in threats:
+                    description = threat.get('description', 'Threat re-detected from existing events')
+                    if 'source_ip' in threat:
+                        description += f" | Source IP: {threat['source_ip']}"
+                    Alert.objects.create(
+                        name=f"{threat['type'].replace('_', ' ').title()} (re-scan)",
+                        description=description,
+                        severity=threat.get('severity', 'medium'),
+                        status='new',
+                    )
+                    alerts_created += 1
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='create',
+                    resource_type='log_reprocess',
+                    description=f'Re-processed log source: {log_source.name} — {alerts_created} new alerts'
+                )
+                messages.success(
+                    request,
+                    f'Re-processed "{log_source.name}": {len(events)} events analysed, {alerts_created} new alerts created.'
+                )
+            return redirect('logs')
+
         log_files = request.FILES.getlist('log_file')
         log_type = request.POST.get('log_type', 'auto')
         source_name_base = request.POST.get('source_name', '').strip()
@@ -881,8 +925,12 @@ def investigation_detail(request, case_id):
                 investigation.status = new_status
                 if new_status == 'resolved':
                     investigation.resolved_at = timezone.now()
+                    if not investigation.owner:
+                        investigation.owner = request.user
                 elif new_status == 'closed':
                     investigation.closed_at = timezone.now()
+                    if not investigation.owner:
+                        investigation.owner = request.user
                 investigation.save()
                 
                 # Add timeline entry
@@ -899,6 +947,34 @@ def investigation_detail(request, case_id):
     # Generate AI-powered investigation report
     from .investigation_ai import InvestigationAI
     ai_report = InvestigationAI.generate_investigation_report(investigation)
+    
+    # Auto-save / update a Report record so it shows in the Reports page
+    report_name = f"Investigation Report: {investigation.case_id}"
+    report_description = ai_report.get('summary', '')
+    
+    notes = investigation.notes.all().order_by('created')
+    if notes.exists():
+        report_description += '\n\nInvestigator's Notes:\n'
+        for note in notes:
+            report_description += f'- [{note.created.strftime("%Y-%m-%d %H:%M")}] {note.author.username}: {note.content}\n'
+            
+    if ai_report.get('key_findings'):
+        report_description += '\n\nKey Findings:\n' + '\n'.join(
+            f'• {f}' for f in ai_report['key_findings']
+        )
+    if ai_report.get('recommendations'):
+        report_description += '\n\nRecommendations:\n' + '\n'.join(
+            f'• {r}' for r in ai_report['recommendations']
+        )
+    Report.objects.update_or_create(
+        name=report_name,
+        defaults={
+            'report_type': 'incident_response',
+            'description': report_description,
+            'format': 'html',
+            'generated_by': investigation.owner or request.user,
+        }
+    )
     
     # Get AI analysis for each alert
     alert_analyses = []
@@ -1225,11 +1301,13 @@ def compliance_framework_detail(request, framework_id):
 
 @login_required
 def reports(request):
-    """Reports listing and generation."""
-    reports_list = Report.objects.all().order_by('-generated_at')
+    """Reports listing — includes reports auto-generated from investigations."""
+    reports_list = Report.objects.select_related('generated_by').all().order_by('-generated_at')
     
     context = {
         'reports': reports_list,
+        'total_reports': reports_list.count(),
+        'investigation_reports': reports_list.filter(report_type='incident_response').count(),
     }
     
     return render(request, 'siem/reports.html', context)

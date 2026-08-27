@@ -252,9 +252,9 @@ class DetectionRuleSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'description', 'rule_type', 'rule_content',
             'is_active', 'severity', 'tags', 'created_by', 'created_by_name',
-            'created', 'updated', 'times_triggered', 'last_triggered'
+            'created', 'updated', 'hit_count', 'last_hit'
         ]
-        read_only_fields = ['id', 'times_triggered', 'last_triggered', 'created', 'updated']
+        read_only_fields = ['id', 'hit_count', 'last_hit', 'created', 'updated']
 
 
 # ============================================================================

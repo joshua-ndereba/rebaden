@@ -87,8 +87,8 @@ class AlertGenerator:
                         alert.save()
                     
                     # Update rule hit count
-                    rule.times_triggered += 1
-                    rule.last_triggered = timezone.now()
+                    rule.hit_count += 1
+                    rule.last_hit = timezone.now()
                     rule.save()
                     
                     if created:
