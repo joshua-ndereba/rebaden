@@ -69,8 +69,7 @@
                 </div>
                 <div>
                     <div style="font-size:12px;color:var(--text-secondary);">Last Login</div>
-                    <div style="font-size:14px;">{% if analyst.last_login %}{{ analyst.last_login|date:"M d, Y H:i" }}{%
-                        else %}Never{% endif %}</div>
+                    <div style="font-size:14px;">{% if analyst.last_login %}{{ analyst.last_login|date:"M d, Y H:i" }}{% else %}Never{% endif %}</div>
                 </div>
             </div>
         </div>
@@ -116,8 +115,7 @@
             <h4><i class="ph ph-power"></i> Account Status</h4>
             <p style="font-size:13px;color:var(--text-secondary);margin:8px 0 16px;">
                 Account is currently <strong
-                    style="color:{% if analyst.is_active %}#10b981{% else %}#ef4444{% endif %};">{% if analyst.is_active
-                    %}Active{% else %}Inactive{% endif %}</strong>.
+                    style="color:{% if analyst.is_active %}#10b981{% else %}#ef4444{% endif %};">{% if analyst.is_active %}Active{% else %}Inactive{% endif %}</strong>.
             </p>
             <form method="post">
                 {% csrf_token %}

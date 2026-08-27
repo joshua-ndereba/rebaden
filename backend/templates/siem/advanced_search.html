@@ -44,8 +44,7 @@
                         {% for val, label in form.severity.field.choices %}
                         <label
                             style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;background:var(--bg-secondary);padding:4px 10px;border-radius:20px;border:1px solid var(--border);">
-                            <input type="checkbox" name="severity" value="{{ val }}" {% if val in request.GET.severity
-                                %}checked{% endif %} style="margin:0;">
+                            <input type="checkbox" name="severity" value="{{ val }}" {% if val in request.GET.severity %}checked{% endif %} style="margin:0;">
                             {{ label }}
                         </label>
                         {% endfor %}
@@ -59,9 +58,7 @@
                         {% for val, label in form.category.field.choices %}
                         <label
                             style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;background:var(--bg-secondary);padding:4px 10px;border-radius:20px;border:1px solid var(--border);">
-                            <input type="checkbox" name="category" value="{{ val }}" {% if val in request.GET.category
-                                %}checked {% elif val in request.GET.getlist and val in request.GET.getlist.category
-                                %}checked {% endif %} style="margin:0;">
+                            <input type="checkbox" name="category" value="{{ val }}" {% if val in request.GET.category %}checked{% endif %} style="margin:0;">
                             {{ label }}
                         </label>
                         {% endfor %}
@@ -88,14 +85,11 @@
 
     <!-- Result summary row -->
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
-        {% if counts.events %}<span style="font-size:13px;color:var(--text-secondary);">Events: <strong>{{ counts.events
-                }}</strong></span>{% endif %}
-        {% if counts.alerts %}<span style="font-size:13px;color:var(--text-secondary);">• Alerts: <strong>{{
-                counts.alerts }}</strong></span>{% endif %}
+        {% if counts.events %}<span style="font-size:13px;color:var(--text-secondary);">Events: <strong>{{ counts.events }}</strong></span>{% endif %}
+        {% if counts.alerts %}<span style="font-size:13px;color:var(--text-secondary);">• Alerts: <strong>{{ counts.alerts }}</strong></span>{% endif %}
         {% if counts.investigations %}<span style="font-size:13px;color:var(--text-secondary);">• Investigations:
             <strong>{{ counts.investigations }}</strong></span>{% endif %}
-        {% if counts.iocs %}<span style="font-size:13px;color:var(--text-secondary);">• IOCs: <strong>{{ counts.iocs
-                }}</strong></span>{% endif %}
+        {% if counts.iocs %}<span style="font-size:13px;color:var(--text-secondary);">• IOCs: <strong>{{ counts.iocs }}</strong></span>{% endif %}
     </div>
 
     <!-- Events Results -->
@@ -117,16 +111,14 @@
                 <tbody>
                     {% for event in results.events %}
                     <tr>
-                        <td style="font-family: 'JetBrains Mono'; font-size: 12px;color:var(--text-secondary);">{{
-                            event.time|date:"Y-m-d H:i:s" }}</td>
+                        <td style="font-family: 'JetBrains Mono'; font-size: 12px;color:var(--text-secondary);">{{ event.time|date:"Y-m-d H:i:s" }}</td>
                         <td style="font-family:'JetBrains Mono';font-size:13px;">{{ event.source_ip|default:"—" }}</td>
                         <td>
                             {% if event.event_type %}
                             <span class="badge">{{ event.event_type|title }}</span>
                             {% else %}<span class="muted">—</span>{% endif %}
                         </td>
-                        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;font-size:13px;">{{
-                            event.message|truncatechars:80 }}</td>
+                        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;font-size:13px;">{{ event.message|truncatechars:80 }}</td>
                         <td style="font-size:13px;">{{ event.category }}</td>
                         <td><span class="severity sev-{{ event.severity }}">{{ event.severity }}</span></td>
                     </tr>

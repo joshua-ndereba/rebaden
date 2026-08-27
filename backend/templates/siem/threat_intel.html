@@ -91,8 +91,7 @@
                     <div style="font-weight: 500;">{{ feed.name }}</div>
                     <div class="muted small">{{ feed.feed_type }} · {{ feed.ioc_count }} IOCs</div>
                 </div>
-                <span class="badge {% if feed.is_active %}event-other{% endif %}">{% if feed.is_active %}Active{% else
-                    %}Inactive{% endif %}</span>
+                <span class="badge {% if feed.is_active %}event-other{% endif %}">{% if feed.is_active %}Active{% else %}Inactive{% endif %}</span>
             </div>
             {% empty %}
             <div class="muted center" style="padding: 32px;">No threat feeds configured</div>

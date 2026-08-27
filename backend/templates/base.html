@@ -71,14 +71,7 @@
                         </a>
                     </li>
 
-                    <li>
-                        <a href="{% url 'investigations' %}"
-                            class="{% if request.resolver_match.url_name == 'investigations' %}active{% endif %}"
-                            title="Investigations">
-                            <i class="ph ph-magnifying-glass"></i>
-                            <span>Investigations</span>
-                        </a>
-                    </li>
+
                     <li>
                         <a href="{% url 'logs' %}"
                             class="{% if request.resolver_match.url_name == 'logs' %}active{% endif %}" title="Logs">
@@ -109,14 +102,7 @@
                             <span>Settings</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'advanced_search' %}"
-                            class="{% if request.resolver_match.url_name == 'advanced_search' %}active{% endif %}"
-                            title="Search">
-                            <i class="ph ph-magnifying-glass"></i>
-                            <span>Search</span>
-                        </a>
-                    </li>
+
                     {% if request.user.is_superuser %}
                     <li>
                         <a href="{% url 'admin_panel' %}"
@@ -162,6 +148,9 @@
                     <span class="crumb-current">{% block page_title %}Dashboard{% endblock %}</span>
                 </div>
                 <div class="top-actions">
+                    <a href="{% url 'advanced_search' %}" class="icon-btn" title="Search" id="search-btn">
+                        <i class="ph ph-magnifying-glass"></i>
+                    </a>
                     <button id="theme-toggle" title="Toggle light/dark mode">🌙</button>
                     <button class="icon-btn" id="notif-btn" title="Notifications"><i class="ph ph-bell"></i></button>
                     <button class="icon-btn" id="help-btn" title="Help"><i class="ph ph-question"></i></button>
