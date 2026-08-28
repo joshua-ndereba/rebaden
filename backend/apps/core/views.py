@@ -829,7 +829,7 @@ def investigation_detail(request, case_id):
     report_description = ai_report.get('summary', '')
     
     notes = investigation.notes.all().order_by('created')
-    if investigation.status in ('closed', 'resolved') and notes.exists():
+    if notes.exists():
         report_description += "\n\nInvestigator's Notes:\n"
         for note in notes:
             report_description += f'- [{note.created.strftime("%Y-%m-%d %H:%M")}] {note.author.username}: {note.content}\n'

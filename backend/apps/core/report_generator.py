@@ -96,7 +96,14 @@ class ReportGenerator:
                 'resolved_at': inv.resolved_at.isoformat() if inv.resolved_at else None,
                 'alerts_count': inv.alerts.count(),
                 'affected_assets_count': inv.affected_assets.count(),
-                'notes_count': inv.notes.count(),
+                'analyst_notes': [
+                    {
+                        'author': note.author.username if note.author else 'Unknown',
+                        'created': note.created.strftime('%Y-%m-%d %H:%M'),
+                        'content': note.content,
+                    }
+                    for note in inv.notes.all().order_by('created')
+                ],
                 'resolution': inv.resolution,
             })
         

@@ -92,12 +92,15 @@
                         <p style="font-size: 14px; margin: 0;">{{ n.content }}</p>
                     </div>
                     {% endfor %}
-                    <div style="margin-top: 8px;">
-                        <textarea id="note-input" class="input" placeholder="Add a note..."
+                    <form method="post" style="margin-top: 8px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_note">
+                        <textarea name="note_content" class="input" placeholder="Add a note..."
                             style="width: 100%; min-height: 80px; resize: vertical;"></textarea>
-                        <button class="btn small" style="margin-top: 8px; width: 100%;" onclick="addNote()">Add
-                            Note</button>
-                    </div>
+                        <button type="submit" class="btn small" style="margin-top: 8px; width: 100%;">
+                            <i class="ph ph-note-pencil"></i> Add Note
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -121,44 +124,6 @@
 </div>
 
 <script>
-    function addNote() {
-        const input = document.getElementById('note-input');
-        const text = input.value.trim();
-        if (!text) return;
-
-        const container = input.parentElement.previousElementSibling; // The div with existing notes (or just before the textarea container)
-        // Actually, the loop is inside the parent div. Let's find the parent of the textarea container.
-        const notesList = input.parentElement.parentElement;
-
-        const noteDiv = document.createElement('div');
-        noteDiv.style.background = 'var(--bg-app)';
-        noteDiv.style.padding = '12px';
-        noteDiv.style.borderRadius = '8px';
-        noteDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="font-weight: 600; font-size: 13px;">You</span>
-                <span class="muted small">Just now</span>
-            </div>
-            <p style="font-size: 14px; margin: 0;">${text}</p>
-        `;
-
-        notesList.insertBefore(noteDiv, input.parentElement);
-        input.value = '';
-    }
-
-    const closeBtn = document.querySelector('button i.ph-check').parentElement;
-    closeBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to close this case?')) {
-            closeBtn.innerHTML = '<i class="ph ph-check"></i> Closed';
-            closeBtn.disabled = true;
-            closeBtn.style.opacity = '0.7';
-            // Update status badge
-            const badge = document.querySelector('.severity');
-            badge.className = 'severity sev-low'; // Green/Grey for closed?
-            badge.style.backgroundColor = 'var(--status-success)';
-            badge.style.color = '#fff';
-            badge.innerText = 'Closed';
-        }
-    });
+    // Notes are now submitted via form POST — no client-side JS needed.
 </script>
 {% endblock %}
