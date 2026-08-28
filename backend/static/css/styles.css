@@ -472,6 +472,12 @@ h2 {
     color: var(--status-danger);
 }
 
+.sev-critical {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--status-danger);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.4) inset;
+}
+
 /* Event Type Badges */
 .badge {
     display: inline-flex;
@@ -632,7 +638,10 @@ h2 {
         padding: 16px;
     }
 
-    .grid {
+    .grid,
+    .stats-grid,
+    .actions-grid,
+    .charts-grid {
         grid-template-columns: 1fr;
     }
 
@@ -649,6 +658,7 @@ h2 {
         width: 100%;
     }
 }
+
 /* ── Sidebar Collapse ── */
 .sidebar-collapse-btn {
     background: transparent;
@@ -662,12 +672,20 @@ h2 {
     align-items: center;
     justify-content: center;
 }
-.sidebar-collapse-btn:hover { background: var(--bg-hover); color: var(--text-main); }
-.sidebar-collapse-btn i { font-size: 18px; }
+
+.sidebar-collapse-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-main);
+}
+
+.sidebar-collapse-btn i {
+    font-size: 18px;
+}
 
 .sidebar-collapsed {
     width: 64px !important;
 }
+
 .sidebar-collapsed .sidebar-nav a span,
 .sidebar-collapsed .user-info,
 .sidebar-collapsed .logo span,
@@ -676,18 +694,34 @@ h2 {
 .sidebar-collapsed .footer-action-btn span {
     display: none;
 }
+
 .sidebar-collapsed .sidebar-footer-actions {
     flex-direction: column;
 }
+
 .sidebar-collapsed .footer-action-btn {
     justify-content: center;
     padding: 8px;
 }
+
 .sidebar-collapsed .sidebar-nav a {
     justify-content: center;
     padding: 10px;
 }
-.sidebar-collapsed .avatar { margin: 0 auto; }
-.sidebar-collapsed .user-profile { justify-content: center; }
-.sidebar-collapsed .sidebar-header { justify-content: center; padding: 0 12px; }
-.sidebar-collapsed .logo { display: none; }
+
+.sidebar-collapsed .avatar {
+    margin: 0 auto;
+}
+
+.sidebar-collapsed .user-profile {
+    justify-content: center;
+}
+
+.sidebar-collapsed .sidebar-header {
+    justify-content: center;
+    padding: 0 12px;
+}
+
+.sidebar-collapsed .logo {
+    display: none;
+}

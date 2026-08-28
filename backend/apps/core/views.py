@@ -149,64 +149,19 @@ def dashboard(request):
     now = timezone.now()
     last_24h = now - timedelta(hours=24)
     last_7d = now - timedelta(days=7)
-    last_30d = now - timedelta(days=30)
 
-    # Core metrics
-    total_events = Event.objects.filter(time__gte=last_24h).count()
-    critical_alerts = Alert.objects.filter(severity='critical', status__in=['new', 'open']).count()
-    high_alerts = Alert.objects.filter(severity='high', status__in=['new', 'open']).count()
-    open_investigations = Investigation.objects.filter(status__in=['new', 'open', 'in_progress']).count()
+    # Core metrics (all time to reflect uploaded logs)
+    total_events_alltime = Event.objects.count()
+    
+    active_alerts = Alert.objects.exclude(status__in=['closed', 'resolved', 'false_positive']).count()
+    critical_alerts = Alert.objects.filter(severity='critical').exclude(status__in=['closed', 'resolved', 'false_positive']).count()
+    high_alerts = Alert.objects.filter(severity='high').exclude(status__in=['closed', 'resolved', 'false_positive']).count()
+    open_investigations = Investigation.objects.exclude(status__in=['closed', 'resolved']).count()
 
-    # Event analysis by type (from log parsing)
-    event_types = Event.objects.filter(time__gte=last_24h).values('event_type').annotate(
-        count=Count('id')
-    ).order_by('-count')[:10]
+    # Event analysis by category instead of event_type
+    event_categories = Event.objects.values('category').annotate(count=Count('id')).order_by('-count')[:8]
 
-    # Attack pattern analysis
-    attack_patterns = Event.objects.filter(
-        time__gte=last_24h,
-        event_type__in=['sql_injection', 'xss', 'brute_force', 'port_scan', 'malware']
-    ).values('event_type').annotate(
-        count=Count('id'),
-        severity=Count('id')  # We'll use count as proxy for severity
-    ).order_by('-count')
-
-    # Calculate max count for progress bars
-    max_attack_count = attack_patterns[0]['count'] if attack_patterns else 1
-
-    # Add color classes for bars
-    attack_patterns_list = list(attack_patterns.values('event_type', 'count'))
-    for pattern in attack_patterns_list:
-        if pattern['event_type'] == 'sql_injection':
-            pattern['color_class'] = 'bar-sql-injection'
-        elif pattern['event_type'] == 'brute_force':
-            pattern['color_class'] = 'bar-brute-force'
-        elif pattern['event_type'] == 'port_scan':
-            pattern['color_class'] = 'bar-port-scan'
-        else:
-            pattern['color_class'] = 'bar-other'
-
-    # Geographic analysis (top attacking countries)
-    geo_data = Event.objects.filter(
-        time__gte=last_24h,
-        source_ip__isnull=False
-    ).values('source_ip').annotate(
-        count=Count('id')
-    ).order_by('-count')[:20]
-
-    # Time-based analysis for charts
-    hourly_events = []
-    for i in range(24):
-        hour_start = now - timedelta(hours=i+1)
-        hour_end = now - timedelta(hours=i)
-        count = Event.objects.filter(time__gte=hour_start, time__lt=hour_end).count()
-        hourly_events.append({
-            'hour': hour_start.strftime('%H:00'),
-            'count': count
-        })
-    hourly_events.reverse()
-
-    # Alert trends
+    # Time-based analysis for charts (last 7 days of alerts)
     alert_trends = []
     for i in range(7):
         day_start = now - timedelta(days=i+1)
@@ -219,132 +174,53 @@ def dashboard(request):
     alert_trends.reverse()
 
     # Top alerts with analysis
-    top_alerts = Alert.objects.filter(status__in=['new', 'open']).values(
+    top_alerts = Alert.objects.exclude(status__in=['closed', 'resolved', 'false_positive']).values(
         'name', 'severity'
     ).annotate(count=Count('id')).order_by('-count')[:8]
 
-    # Recent events with enhanced context
-    # recent_events = Event.objects.select_related('alert').all().order_by('-time')[:15]
-    # Use prefetch_related for the reverse ManyToMany relationship
-    recent_events = Event.objects.select_related('log_source', 'asset').prefetch_related('alert_set').order_by('-time')[:15]
-    # Top source IPs with threat intelligence context
-    top_sources_raw = Event.objects.filter(source_ip__isnull=False).values('source_ip').annotate(
-        count=Count('id'),
-        alerts=Count('alert', distinct=True)
-    ).order_by('-count')[:10]
-    top_sources = [{
-        'ip': item['source_ip'],
-        'events': item['count'],
-        'alerts': item['alerts'],
-        'threat_level': 'high' if item['alerts'] > 5 else 'medium' if item['alerts'] > 2 else 'low'
-    } for item in top_sources_raw]
+    # Recent critical/high security events
+    recent_events = Event.objects.select_related('log_source', 'asset').prefetch_related('alert_set').filter(severity__in=['critical', 'high']).order_by('-time')[:15]
+    if not recent_events.exists():
+        # Fall back to any events if no critical/high
+        recent_events = Event.objects.select_related('log_source', 'asset').prefetch_related('alert_set').order_by('-time')[:15]
 
     # AI insights and correlations
     ai_insights = InvestigationAI.generate_dashboard_insights(last_24h)
 
-    # Threat hunting opportunities
-    threat_hunting = {
-        'unusual_traffic': Event.objects.filter(
-            time__gte=last_24h,
-            source_ip__in=top_sources_raw.values_list('source_ip', flat=True)[:3]
-        ).count(),
-        'lateral_movement': Event.objects.filter(
-            time__gte=last_24h,
-            event_type='lateral_movement'
-        ).count(),
-        'data_exfiltration': Event.objects.filter(
-            time__gte=last_24h,
-            event_type__in=['data_exfil', 'suspicious_upload']
-        ).count(),
-    }
-
-    # MITRE ATT&CK coverage and recent mappings
-    mitre_coverage = MitreTechnique.objects.count()
-    recent_mitre = MitreTechnique.objects.filter(
-        alert__first_seen__gte=last_7d
-    ).distinct().count()
-
-    # Threat intelligence stats
-    active_iocs = IOC.objects.filter(is_active=True).count()
-    threat_actors = ThreatActor.objects.count()
-    ioc_matches_24h = IOC.objects.filter(
-        created__gte=last_24h
-    ).count()
-
-    # Anomalies and behavioral analysis
-    unreviewed_anomalies = AnomalyDetection.objects.filter(is_reviewed=False).count()
-    anomaly_trends = AnomalyDetection.objects.filter(
-        detected_at__gte=last_7d
-    ).values('anomaly_type').annotate(count=Count('id')).order_by('-count')
-
-    # Active alerts breakdown
-    active_alerts = Alert.objects.filter(status__in=['new', 'open']).count()
-    alerts_by_severity = Alert.objects.filter(status__in=['new', 'open']).values('severity').annotate(
+    # Alerts by severity for charting (all alerts to show full history)
+    alerts_by_severity = Alert.objects.values('severity').annotate(
         count=Count('id')
     ).order_by('severity')
 
-    # Events per minute with trend
-    events_per_minute = round(total_events / (24 * 60), 2) if total_events > 0 else 0
-    events_trend = "+12%"  # This would be calculated from historical data
-
     # Organize into comprehensive metrics dictionary
     metrics = {
-        'events_per_minute': events_per_minute,
-        'events_trend': events_trend,
         'active_alerts': active_alerts,
-        'top_sources': top_sources,
         'recent_events': recent_events,
-        'event_types': list(event_types.values('event_type', 'count')),
-        'attack_patterns': list(attack_patterns.values('event_type', 'count')),
-        'hourly_events': hourly_events,
+        'event_types': list(event_categories),
         'alert_trends': alert_trends,
-        'alerts_by_severity': list(alerts_by_severity.values('severity', 'count')),
-        'geo_data': list(geo_data.values('source_ip', 'count')),
+        'alerts_by_severity': list(alerts_by_severity),
     }
 
     context = {
         'metrics': metrics,
-        'total_events_24h': total_events,
-        'total_events_alltime': Event.objects.count(),
-        'active_log_sources': LogSource.objects.filter(is_active=True).count(),
-        'events_per_minute': events_per_minute,
+        'total_events_alltime': total_events_alltime,
+        'active_alerts': active_alerts,
         'critical_alerts': critical_alerts,
         'high_alerts': high_alerts,
         'open_investigations': open_investigations,
         'top_alerts': top_alerts,
         'recent_events': recent_events,
-        'top_sources': top_sources,
-        'mitre_coverage': mitre_coverage,
-        'recent_mitre': recent_mitre,
-        'active_iocs': active_iocs,
-        'threat_actors': threat_actors,
-        'ioc_matches_24h': ioc_matches_24h,
-        'unreviewed_anomalies': unreviewed_anomalies,
-        'anomaly_trends': anomaly_trends,
         'ai_insights': ai_insights,
-        'threat_hunting': threat_hunting,
-        'event_types': list(event_types.values('event_type', 'count')),
-        'attack_patterns': attack_patterns_list,
-        'max_attack_count': max_attack_count,
-        'hourly_events': hourly_events,
-        'alert_trends': alert_trends,
-        'alerts_by_severity': list(alerts_by_severity.values('severity', 'count')),
-        'log_sources_with_counts': list(
-            LogSource.objects.annotate(event_count=Count('event')).order_by('-event_count')[:8]
-        ),
+        'event_types': list(event_categories),
+        'alerts_by_severity': list(alerts_by_severity),
+        
         # JSON serialized data for JavaScript charts
-        'hourly_events_json': json.dumps(hourly_events),
-        'alerts_by_severity_json': json.dumps(list(alerts_by_severity.values('severity', 'count'))),
-        'event_types_json': json.dumps(list(event_types.values('event_type', 'count'))),
+        'alerts_by_severity_json': json.dumps(list(alerts_by_severity)),
+        'event_types_json': json.dumps(list(event_categories)),
         'alert_trends_json': json.dumps(alert_trends),
-        'top_sources_json': json.dumps([{'ip': s['ip'], 'events': s['events'], 'alerts': s['alerts']} for s in top_sources]),
     }
 
     return render(request, 'siem/dashboard.html', context)
-
-
-
-
 # ============================================================================
 # EVENTS & LOGS
 # ============================================================================

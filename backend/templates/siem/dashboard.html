@@ -8,16 +8,17 @@
 {% block content %}
 <div class="container">
   <style>
+    /* ── Dashboard-specific overrides ── */
     .glass-banner {
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.85) 0%, rgba(99, 102, 241, 0.85) 100%);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
       color: white;
       margin-bottom: 24px;
-      padding: 24px;
-      border-radius: 12px;
+      padding: 24px 28px;
+      border-radius: 14px;
       position: relative;
       overflow: hidden;
     }
@@ -25,265 +26,436 @@
     .glass-banner::before {
       content: '';
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
+      top: -60%;
+      right: -20%;
+      width: 50%;
       height: 200%;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 65%);
       pointer-events: none;
     }
 
-    .dashboard-stat-card {
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      border: 1px solid var(--border-subtle);
+    .glass-banner .banner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
     }
 
-    .dashboard-stat-card:hover {
+    .glass-banner .banner-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      color: white;
+      margin: 0;
+    }
+
+    .glass-banner .banner-summary {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.85);
+      margin: 0 0 14px 0;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+
+    .banner-findings {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .finding-chip {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 5px 13px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ── Stat Cards Row ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 22px 24px;
+      transition: all 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: 14px 14px 0 0;
+      opacity: 0;
+      transition: opacity 0.28s;
+    }
+
+    .stat-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.25);
       border-color: var(--accent-primary);
     }
 
-    .gradient-text {
-      background: linear-gradient(to right, var(--text-main), var(--text-secondary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: 700;
+    .stat-card:hover::after {
+      opacity: 1;
     }
 
-    .metric {
-      font-size: 36px;
-      margin: 12px 0 8px 0;
+    .stat-card.accent-blue::after {
+      background: var(--accent-primary);
+    }
+
+    .stat-card.accent-red::after {
+      background: var(--status-danger);
+    }
+
+    .stat-card.accent-amber::after {
+      background: var(--status-warning);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 42px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
       font-variant-numeric: tabular-nums;
+      line-height: 1;
+      margin-bottom: 10px;
+      color: var(--text-main);
+    }
+
+    .stat-value.red {
+      color: var(--status-danger);
+    }
+
+    .stat-value.amber {
+      color: var(--status-warning);
+    }
+
+    .stat-sub {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ── Quick Actions & AI Recs Row ── */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    /* ── Charts + Alerts Row ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+      align-items: stretch;
+    }
+
+    /* Left column: severity + event type stacked */
+    .charts-left {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .chart-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 22px 24px;
+    }
+
+    /* Right column: recent alerts fills full height */
+    .alerts-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .alerts-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    .alerts-panel-header h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin: 0;
+    }
+
+    .alerts-scroll {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .chart-card h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 16px;
+    }
+
+    .chart-canvas-wrap {
+      height: 185px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Recent Alerts list in the third chart-grid column */
+    .alert-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 13px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      transition: background 0.18s;
+    }
+
+    .alert-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .alert-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .alert-item-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 2px;
+    }
+
+    .alert-item-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ── Full-width Events Table ── */
+    .events-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 24px;
+    }
+
+    .events-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .events-header h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin: 0;
+    }
+
+    /* badge risk level colours */
+    .badge.critical {
+      background: rgba(239, 68, 68, .15);
+      color: var(--status-danger);
+    }
+
+    .badge.high {
+      background: rgba(245, 158, 11, .15);
+      color: var(--status-warning);
+    }
+
+    .badge.medium {
+      background: rgba(59, 130, 246, .12);
+      color: var(--accent-primary);
+    }
+
+    .badge.low {
+      background: rgba(16, 185, 129, .12);
+      color: var(--status-success);
     }
   </style>
 
-  <!-- AI Insights Banner -->
-  <div class="card full-width glass-banner">
-    <div class="top-row" style="position: relative; z-index: 1;">
-      <h3 style="color: white; margin: 0; display: flex; align-items: center; gap: 8px;"><i class="ph-bold ph-brain"
-          style="font-size: 24px;"></i> AI Threat Analysis</h3>
-      <span class="badge {{ ai_insights.risk_assessment }}">{{ ai_insights.risk_assessment|title }} Risk</span>
+  <!-- ① AI Threat Analysis Banner -->
+  <div class="glass-banner">
+    <div class="banner-header">
+      <h3 class="banner-title">
+        <i class="ph-bold ph-brain" style="font-size:22px;"></i>
+        AI Threat Analysis
+      </h3>
+      <span class="badge {{ ai_insights.risk_assessment }}">
+        {{ ai_insights.risk_assessment|title }} Risk
+      </span>
     </div>
-    <p style="margin: 16px 0; font-size: 16px;">{{ ai_insights.threat_summary }}</p>
+    <p class="banner-summary">{{ ai_insights.threat_summary }}</p>
     {% if ai_insights.key_findings %}
-    <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px;">
+    <div class="banner-findings">
       {% for finding in ai_insights.key_findings %}
-      <div
-        style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; backdrop-filter: blur(4px);">
-        {{ finding }}
-      </div>
+      <div class="finding-chip">{{ finding }}</div>
       {% endfor %}
     </div>
     {% endif %}
   </div>
 
-  <!-- Quick Actions Row -->
-  <div class="grid" style="margin-bottom: 24px;">
-    <div class="card dashboard-stat-card">
-      <h4>Quick Actions</h4>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <a href="{% url 'logs' %}" class="btn small"><i class="ph ph-upload"></i> Upload Logs</a>
-        <a href="{% url 'investigations' %}" class="btn small ghost"><i class="ph ph-folder"></i> New Investigation</a>
-      </div>
-    </div>
-
-    <div class="card dashboard-stat-card">
-      <h4>AI Recommendations</h4>
-      <div style="display: flex; flex-direction: column; gap: 6px;">
-        {% for rec in ai_insights.recommendations %}
-        <div style="font-size: 13px; color: var(--text-secondary);">
-          <i class="ph ph-lightbulb" style="color: #fbbf24;"></i> {{ rec }}
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <div class="card dashboard-stat-card">
-      <h4>Threat Hunting</h4>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-          <span>Unusual Traffic</span>
-          <span style="font-weight: 600; color: #ef4444;">{{ threat_hunting.unusual_traffic }}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-          <span>Lateral Movement</span>
-          <span style="font-weight: 600; color: #f59e0b;">{{ threat_hunting.lateral_movement }}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-          <span>Data Exfil</span>
-          <span style="font-weight: 600; color: #10b981;">{{ threat_hunting.data_exfiltration }}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Metrics Row -->
-  <div class="grid">
-    <!-- Events per Minute -->
-    <div class="card dashboard-stat-card">
-      <h3 style="font-size: 14px; color: var(--text-secondary); margin:0;">Events per Minute</h3>
-      <div class="metric gradient-text">{{ metrics.events_per_minute }}</div>
-      <div class="center" style="margin-top: 8px; color: var(--status-success); font-size: 13px;">
-        <i class="ph-bold ph-trend-up"></i>
-        <span>{{ metrics.events_trend }} vs last hour</span>
-      </div>
-    </div>
-
+  <!-- ② Key Metrics - 3 stat cards -->
+  <div class="stats-grid">
     <!-- Active Alerts -->
-    <div class="card dashboard-stat-card">
-      <h3 style="font-size: 14px; color: var(--text-secondary); margin:0;">Active Alerts</h3>
-      <div class="metric gradient-text">{{ metrics.active_alerts }}</div>
-      <div class="center" style="margin-top: 8px; color: var(--status-warning); font-size: 13px;">
-        <i class="ph-bold ph-warning"></i>
-        <span>Requires attention</span>
+    <div class="stat-card accent-blue">
+      <div class="stat-label">Active Alerts</div>
+      <div class="stat-value">{{ active_alerts }}</div>
+      <div class="stat-sub">
+        <i class="ph-bold ph-warning" style="color:var(--status-warning);font-size:14px;"></i>
+        Requires attention
       </div>
     </div>
 
-    <!-- Critical & High Alerts -->
-    <div class="card dashboard-stat-card">
-      <h3 style="font-size: 14px; color: var(--text-secondary); margin:0;">Critical Alerts</h3>
-      <div class="metric gradient-text" style="color: var(--status-error); -webkit-text-fill-color: initial;">{{ critical_alerts }}</div>
-      <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">
+    <!-- Critical Alerts -->
+    <div class="stat-card accent-red">
+      <div class="stat-label">Critical Alerts</div>
+      <div class="stat-value red">{{ critical_alerts }}</div>
+      <div class="stat-sub">
+        <i class="ph ph-arrow-up-right" style="color:var(--status-danger);font-size:14px;"></i>
         +{{ high_alerts }} high priority
       </div>
     </div>
 
     <!-- Open Investigations -->
-    <div class="card dashboard-stat-card">
-      <h3 style="font-size: 14px; color: var(--text-secondary); margin:0;">Open Investigations</h3>
-      <div class="metric gradient-text">{{ open_investigations }}</div>
-      <div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">
+    <div class="stat-card accent-amber">
+      <div class="stat-label">Open Investigations</div>
+      <div class="stat-value">{{ open_investigations }}</div>
+      <div class="stat-sub">
+        <i class="ph ph-folder-open" style="color:var(--accent-primary);font-size:14px;"></i>
         Active cases
       </div>
     </div>
   </div>
 
-  <!-- Charts Row -->
-  <div class="grid">
-    <!-- Events Timeline -->
-    <div class="card" style="grid-column: span 2;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3>Event Volume (24h)</h3>
-        <select id="timeRange"
-          style="font-size: 13px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px;">
-          <option value="24h">Last 24 Hours</option>
-          <option value="7d">Last 7 Days</option>
-          <option value="30d">Last 30 Days</option>
-        </select>
-      </div>
-      <div style="height: 300px;">
-        <canvas id="eventsChart"></canvas>
+  <!-- ③ Quick Actions + AI Recommendations -->
+  <div class="actions-grid">
+    <div class="chart-card">
+      <h3>Quick Actions</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="{% url 'logs' %}" class="btn" style="justify-content:center;">
+          <i class="ph ph-upload"></i> Upload Logs
+        </a>
+        <a href="{% url 'investigations' %}" class="btn ghost" style="justify-content:center;">
+          <i class="ph ph-folder"></i> New Investigation
+        </a>
       </div>
     </div>
 
-    <!-- Alert Severity Distribution -->
-    <div class="card">
-      <h3>Alert Severity</h3>
-      <div style="height: 300px; display: flex; justify-content: center;">
-        <canvas id="severityChart"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- Attack Patterns & Analysis -->
-  <div class="grid">
-    <!-- Attack Pattern Analysis -->
-    <div class="card">
-      <h3>Attack Patterns</h3>
-      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
-        {% for pattern in attack_patterns %}
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <div style="font-weight: 500; font-size: 14px;">{{ pattern.event_type|title }}</div>
-            <div style="font-size: 12px; color: var(--text-secondary);">{{ pattern.count }} events</div>
-          </div>
-          <div style="width: 60px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
-            <!-- vscode-disable -->
-            <div class="attack-bar {{ pattern.color_class }}" style="width: 100px;"></div>
-            <!-- vscode-enable -->
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Top Attack Sources -->
-    <div class="card">
-      <h3>Top Attack Sources</h3>
-      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
-        {% for source in top_sources %}
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <div style="font-weight: 500; font-size: 14px;">{{ source.ip }}</div>
-            <div style="font-size: 12px; color: var(--text-secondary);">{{ source.events }} events, {{ source.alerts }}
-              alerts</div>
-          </div>
-          <span class="badge {{ source.threat_level }}">{{ source.threat_level }}</span>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Event Types Distribution -->
-    <div class="card">
-      <h3>Event Types</h3>
-      <div style="height: 250px;">
-        <canvas id="eventTypesChart"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- Intelligence & Investigations -->
-  <div class="grid">
-    <!-- Threat Intelligence -->
-    <div class="card">
-      <h3>Threat Intelligence</h3>
-      <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
-        <div style="display: flex; justify-content: space-between;">
-          <span>Active IOCs</span>
-          <span style="font-weight: 600; color: #3b82f6;">{{ active_iocs }}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span>IOC Matches (24h)</span>
-          <span style="font-weight: 600; color: #ef4444;">{{ ioc_matches_24h }}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span>Threat Actors</span>
-          <span style="font-weight: 600; color: #f59e0b;">{{ threat_actors }}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span>MITRE Coverage</span>
-          <span style="font-weight: 600; color: #10b981;">{{ mitre_coverage }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Recent Alerts -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3>Recent Alerts</h3>
-        <a href="{% url 'alerts' %}" class="btn ghost small">View All</a>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        {% for alert in top_alerts %}
+    <div class="chart-card">
+      <h3>AI Recommendations</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        {% for rec in ai_insights.recommendations %}
         <div
-          style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 6px;">
+          style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text-secondary);line-height:1.5;">
+          <i class="ph ph-lightbulb" style="color:#fbbf24;font-size:16px;flex-shrink:0;margin-top:1px;"></i>
+          <span>{{ rec }}</span>
+        </div>
+        {% empty %}
+        <div style="font-size:13px;color:var(--text-muted);">No recommendations at this time.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ Charts + Recent Alerts -->
+  <div class="charts-grid">
+    <!-- Left column: two charts stacked -->
+    <div class="charts-left">
+      <!-- Doughnut: Alert Severity -->
+      <div class="chart-card">
+        <h3>Alert Severity</h3>
+        <div class="chart-canvas-wrap">
+          <canvas id="severityChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Bar: Events by Category -->
+      <div class="chart-card">
+        <h3>Events by Category</h3>
+        <div class="chart-canvas-wrap">
+          <canvas id="eventTypesChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: Recent Alerts panel fills the full height -->
+    <div class="alerts-panel">
+      <div class="alerts-panel-header">
+        <h3>Recent Alerts</h3>
+        <a href="{% url 'alerts' %}" class="btn ghost small" style="text-transform:none;letter-spacing:0;">View All</a>
+      </div>
+      <div class="alerts-scroll">
+        {% for alert in top_alerts %}
+        <div class="alert-item">
           <div>
-            <div style="font-weight: 500; font-size: 14px;">{{ alert.name }}</div>
-            <div style="font-size: 12px; color: var(--text-secondary);">{{ alert.count }} occurrences</div>
+            <div class="alert-item-name">{{ alert.name }}</div>
+            <div class="alert-item-meta">{{ alert.count }} occurrence{{ alert.count|pluralize }}</div>
           </div>
           <span class="severity sev-{{ alert.severity }}">{{ alert.severity|title }}</span>
         </div>
+        {% empty %}
+        <div style="font-size:13px;color:var(--text-muted);text-align:center;padding:32px 0;">No recent alerts</div>
         {% endfor %}
       </div>
     </div>
   </div>
 
-  <!-- Recent Events Table -->
-  <div class="card full-width">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h3>Recent Security Events</h3>
+  <!-- ⑤ Recent Security Events Table (full width) -->
+  <div class="events-card">
+    <div class="events-header">
+      <h3><i class="ph ph-shield-warning" style="margin-right:8px;color:var(--accent-primary);"></i>Recent Security
+        Events</h3>
       <a href="{% url 'events' %}" class="btn ghost small">View All Events</a>
     </div>
 
@@ -293,7 +465,7 @@
           <tr>
             <th>Time</th>
             <th>Source</th>
-            <th>Event Type</th>
+            <th>Category</th>
             <th>Message</th>
             <th>Status</th>
             <th>Actions</th>
@@ -302,20 +474,28 @@
         <tbody>
           {% for event in recent_events %}
           <tr>
-            <td style="font-family: 'JetBrains Mono'; font-size: 13px;">{{ event.time|date:"M d H:i:s" }}</td>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:12px;white-space:nowrap;">
+              {{ event.time|date:"M d H:i:s" }}
+            </td>
             <td>
               {% if event.source_ip %}
-              <div>{{ event.source_ip }}</div>
-              {% if event.source_port %}<div style="font-size: 11px; color: var(--text-secondary);">:{{ event.source_port }}</div>{% endif %}
+              <div style="font-size:13px;">{{ event.source_ip }}</div>
+              {% if event.source_port %}
+              <div style="font-size:11px;color:var(--text-muted);">:{{ event.source_port }}</div>
+              {% endif %}
               {% else %}
               <span class="muted">N/A</span>
               {% endif %}
             </td>
             <td>
               <span
-                class="badge {% if event.event_type == 'sql_injection' %}event-sql-injection{% elif event.event_type == 'brute_force' %}event-brute-force{% elif event.event_type == 'port_scan' %}event-port-scan{% else %}event-other{% endif %}">{{ event.event_type|title }}</span>
+                class="badge {% if event.event_type == 'sql_injection' %}event-sql-injection{% elif event.event_type == 'brute_force' %}event-brute-force{% elif event.event_type == 'port_scan' %}event-port-scan{% else %}event-other{% endif %}">
+                {{ event.category|title }}
+              </span>
             </td>
-            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">{{ event.message|truncatechars:80 }}</td>
+            <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;">
+              {{ event.message|truncatechars:80 }}
+            </td>
             <td>
               {% if event.alert %}
               <span class="severity sev-{{ event.alert.severity }}">{{ event.alert.severity|title }}</span>
@@ -331,128 +511,88 @@
               {% endif %}
             </td>
           </tr>
-
+          {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted);">
+              <i class="ph ph-database" style="font-size:32px;display:block;margin-bottom:8px;"></i>
+              No recent events
+            </td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
-</div>
+
+</div><!-- /.container -->
 
 <script>
-  // Chart Configuration
+  // ── Chart.js global defaults ──
   Chart.defaults.color = '#a1a1aa';
   Chart.defaults.borderColor = '#27272a';
   Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.font.size = 12;
 
-  // Events Timeline Chart
-  const eventsData = {{ hourly_events_json| safe }};
-  const ctxEvents = document.getElementById('eventsChart').getContext('2d');
-  new Chart(ctxEvents, {
-    type: 'line',
-    data: {
-      labels: eventsData.map(d => d.hour),
-      datasets: [{
-        label: 'Events',
-        data: eventsData.map(d => d.count),
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        fill: true,
-        tension: 0.4
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
-        x: { grid: { display: false } }
-      }
-    }
-  });
-
-  // Alert Severity Chart
+  // ── Alert Severity Doughnut ──
   const severityData = {{ alerts_by_severity_json| safe }};
-  const ctxSeverity = document.getElementById('severityChart').getContext('2d');
-  new Chart(ctxSeverity, {
+  new Chart(document.getElementById('severityChart').getContext('2d'), {
     type: 'doughnut',
     data: {
       labels: severityData.map(d => d.severity.charAt(0).toUpperCase() + d.severity.slice(1)),
       datasets: [{
         data: severityData.map(d => d.count),
         backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-        borderWidth: 0
+        borderWidth: 0,
+        hoverOffset: 6
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom' }
+        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10 } }
       },
-      cutout: '70%'
+      cutout: '68%'
     }
   });
 
-  // Event Types Chart
+  // ── Event Types Bar ──
   const eventTypesData = {{ event_types_json| safe }};
-  const ctxEventTypes = document.getElementById('eventTypesChart').getContext('2d');
-  new Chart(ctxEventTypes, {
+  new Chart(document.getElementById('eventTypesChart').getContext('2d'), {
     type: 'bar',
     data: {
       labels: eventTypesData.map(d => d.event_type || 'Unknown'),
       datasets: [{
         label: 'Events',
         data: eventTypesData.map(d => d.count),
-        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+        backgroundColor: 'rgba(59,130,246,0.75)',
         borderColor: '#3b82f6',
-        borderWidth: 1
+        borderWidth: 1,
+        borderRadius: 5
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
+      plugins: { legend: { display: false } },
       scales: {
-        y: { beginAtZero: true }
+        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+        x: { grid: { display: false } }
       }
     }
   });
 
-  // Interactive functions
+  // ── Create Alert from event ──
   function createAlert(eventId) {
     if (confirm('Create an alert for this event?')) {
-      // This would make an AJAX call to create an alert
       fetch(`/api/events/${eventId}/create-alert/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
         }
-      }).then(response => {
-        if (response.ok) {
-          location.reload();
-        }
-      });
+      }).then(r => { if (r.ok) location.reload(); });
     }
   }
-
-  // Time range selector
-  document.getElementById('timeRange').addEventListener('change', function (e) {
-    // This would update the chart data based on selected time range
-    console.log('Time range changed to:', e.target.value);
-    // In a real implementation, this would fetch new data and update the chart
-  });
-
-  // Auto-refresh functionality (optional)
-  setInterval(() => {
-    // Could refresh certain metrics every 30 seconds
-    console.log('Dashboard auto-refresh would happen here');
-  }, 30000);
 </script>
 {% endblock %}
